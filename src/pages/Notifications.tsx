@@ -36,6 +36,12 @@ export function Notifications() {
   }
   useEffect(() => { void load(); }, [page]);
 
+  useEffect(() => {
+    const handler = () => void load();
+    window.addEventListener('realtime-notification', handler);
+    return () => window.removeEventListener('realtime-notification', handler);
+  }, []);
+
   async function markAll() {
     await api.post('/notifications/read-all');
     void load();

@@ -1,13 +1,16 @@
 import { ReactNode, useEffect, useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, MessageSquare, FileText, Megaphone, FolderKanban, CalendarDays,
-  Users, Home, Bell, LogOut, ShieldCheck, Building2, ClipboardList, ScrollText,
+  Users, Home, Bell, LogOut, ShieldCheck, Building2, ClipboardList, ScrollText, Menu,
+  CheckSquare, Landmark, Handshake,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../lib/auth';
 import { api } from '../lib/api';
-import { LanguageSwitcher } from './ui';
+import { connectRealtime, disconnectRealtime, RealtimeNotification } from '../lib/realtime';
+import { LanguageSwitcher, cx } from './ui';
+import { X } from 'lucide-react';
 
 const ALL_ROLES = ['SUPER_ADMIN', 'PROVINCE_ADMIN', 'DISTRICT_ADMIN', 'SECTOR_ADMIN', 'CELL_ADMIN', 'VILLAGE_ADMIN', 'CITIZEN'];
 const ADMIN_ROLES = ['SUPER_ADMIN', 'PROVINCE_ADMIN', 'DISTRICT_ADMIN', 'SECTOR_ADMIN', 'CELL_ADMIN', 'VILLAGE_ADMIN'];
@@ -23,6 +26,9 @@ function navItems(role: string, t: (key: string) => string) {
     { to: '/events', label: t('nav.events'), icon: <CalendarDays size={17} />, roles: ALL_ROLES },
     { to: '/households', label: t('nav.households'), icon: <Home size={17} />, roles: ['SUPER_ADMIN', 'PROVINCE_ADMIN', 'DISTRICT_ADMIN', 'SECTOR_ADMIN', 'CELL_ADMIN', 'VILLAGE_ADMIN'] },
     { to: '/citizens', label: t('nav.citizens'), icon: <Users size={17} />, roles: ADMIN_ROLES },
+    { to: '/tasks', label: t('nav.tasks'), icon: <CheckSquare size={17} />, roles: ADMIN_ROLES },
+    { to: '/meetings', label: t('nav.meetings'), icon: <Landmark size={17} />, roles: ALL_ROLES },
+    { to: '/cooperatives', label: t('nav.cooperatives'), icon: <Handshake size={17} />, roles: ADMIN_ROLES },
     { to: '/users', label: t('nav.users'), icon: <Building2 size={17} />, roles: ['SUPER_ADMIN', 'PROVINCE_ADMIN', 'DISTRICT_ADMIN', 'SECTOR_ADMIN', 'CELL_ADMIN'] },
     { to: '/audit-logs', label: t('nav.auditLogs'), icon: <ScrollText size={17} />, roles: ['SUPER_ADMIN', 'PROVINCE_ADMIN', 'DISTRICT_ADMIN', 'SECTOR_ADMIN'] },
     { to: '/notifications', label: t('nav.notifications'), icon: <Bell size={17} />, roles: ALL_ROLES },
@@ -35,8 +41,15 @@ export function Layout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [scopeLabel, setScopeLabel] = useState<string>('');
   const [unread, setUnread] = useState(0);
+  const [toast, setToast] = useState<RealtimeNotification | null>(null);
+
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
 
   useEffect(() => {
     if (user) {
@@ -57,13 +70,30 @@ export function Layout({ children }: { children: ReactNode }) {
         else setScopeLabel(t('common.appName'));
       }).catch(() => {});
       api.get('/notifications/unread-count').then((r) => setUnread(r.data.count)).catch(() => {});
+
+      connectRealtime({
+        onUnread: (count) => setUnread(count),
+        onNotification: (n) => {
+          setUnread((u) => u + 1);
+          setToast(n);
+          window.dispatchEvent(new Event('realtime-notification'));
+        },
+      });
     }
+    return () => disconnectRealtime();
   }, [user, t]);
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 6000);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   const role = user?.role ?? 'CITIZEN';
   const items = navItems(role, t);
 
   async function handleLogout() {
+    disconnectRealtime();
     const refreshToken = localStorage.getItem('gov_refresh_token') ?? undefined;
     await logout(refreshToken);
     navigate('/login');
@@ -71,8 +101,18 @@ export function Layout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen">
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-30 bg-black/50 md:hidden" onClick={() => setSidebarOpen(false)} />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-60 shrink-0 bg-brand-900 text-white flex flex-col fixed inset-y-0">
+      <aside
+        className={cx(
+          'fixed inset-y-0 left-0 z-40 w-60 shrink-0 bg-brand-900 text-white flex flex-col transition-transform duration-200 md:translate-x-0',
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full',
+        )}
+      >
         <div className="px-5 py-5 border-b border-white/10">
           <div className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-lg bg-white/10 flex items-center justify-center">
@@ -121,18 +161,48 @@ export function Layout({ children }: { children: ReactNode }) {
       </aside>
 
       {/* Main */}
-      <div className="flex-1 ml-60 flex flex-col min-w-0">
-        <header className="sticky top-0 z-30 bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between gap-4">
-          <div>
-            <div className="text-sm font-medium text-slate-700">{t(`role.${role}`)}</div>
-            <div className="text-[11px] text-slate-400">{scopeLabel}</div>
+      <div className="flex-1 md:ml-60 flex flex-col min-w-0">
+        <header className="sticky top-0 z-20 bg-white border-b border-slate-200 px-4 md:px-6 py-3 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="md:hidden text-slate-500 hover:text-slate-700 p-1 -ml-1"
+              aria-label="Open menu"
+            >
+              <Menu size={20} />
+            </button>
+            <div className="min-w-0">
+              <div className="text-sm font-medium text-slate-700 truncate">{t(`role.${role}`)}</div>
+              <div className="text-[11px] text-slate-400 truncate">{scopeLabel}</div>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <LanguageSwitcher />
           </div>
         </header>
-        <main className="flex-1 p-6 max-w-[1400px] w-full">{children}</main>
+        <main className="flex-1 p-4 md:p-6 max-w-[1400px] w-full">{children}</main>
       </div>
+
+      {/* Real-time notification toast */}
+      {toast && (
+        <div className="fixed top-4 right-4 z-50 w-80 max-w-[calc(100vw-2rem)] rounded-lg border border-slate-200 bg-white shadow-lg">
+          <div className="flex items-start gap-3 p-3">
+            <div className="mt-1 h-2 w-2 rounded-full bg-brand-600 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm font-semibold text-slate-800 truncate">{toast.title}</span>
+                <button onClick={() => setToast(null)} className="text-slate-400 hover:text-slate-600 shrink-0">
+                  <X size={14} />
+                </button>
+              </div>
+              <p className="text-xs text-slate-600 mt-0.5 line-clamp-2">{toast.content}</p>
+              {toast.link && (
+                <Link to={toast.link} onClick={() => setToast(null)} className="text-xs text-brand-700 hover:underline mt-1 inline-block">Open →</Link>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

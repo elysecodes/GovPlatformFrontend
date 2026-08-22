@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import {
   Building2, Users, Home, MessageSquare, ClipboardList, FolderKanban,
-  AlertTriangle, FileText, CalendarDays, TrendingUp,
+  AlertTriangle, FileText, CalendarDays, TrendingUp, Smile,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../lib/auth';
@@ -13,11 +13,13 @@ function DashboardCharts({ data }: { data: any }) {
   const { t } = useTranslation();
   const charts = data.charts;
   if (!charts) return null;
-  const statusRows: [string, Record<string, number>][] = [
-    [t('dashboard.chartComplaints'), charts.complaintsByStatus],
-    [t('dashboard.chartRequests'), charts.requestsByStatus],
-    [t('dashboard.chartProjects'), charts.projectsByStatus],
-  ].filter(([, c]) => c && Object.keys(c).length > 0);
+  const statusRows = (
+    [
+      [t('dashboard.chartComplaints'), charts.complaintsByStatus],
+      [t('dashboard.chartRequests'), charts.requestsByStatus],
+      [t('dashboard.chartProjects'), charts.projectsByStatus],
+    ] as [string, Record<string, number>][]
+  ).filter(([, c]) => c && Object.keys(c).length > 0);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -34,7 +36,7 @@ function DashboardCharts({ data }: { data: any }) {
         </Card>
       ))}
 
-      <Card title={t('dashboard.last30Days')} subtitle={t('dashboard.complaintsPerDay')} className="lg:col-span-3">
+      <Card title={t('dashboard.last30Days')} subtitle={t('dashboard.complaintsPerDay')} className="lg:col-span-2">
         <div className="flex items-end gap-1 h-32">
           {charts.complaintsLast30Days?.map((d: any) => (
             <div key={d.date} className="flex-1 flex flex-col justify-end items-center group" title={`${d.date}: ${d.count}`}>
@@ -47,6 +49,19 @@ function DashboardCharts({ data }: { data: any }) {
           ))}
         </div>
       </Card>
+
+      {charts.complaintsByCategory && Object.keys(charts.complaintsByCategory).length > 0 && (
+        <Card title={t('dashboard.complaintsByCategory')}>
+          <div className="space-y-2">
+            {Object.entries(charts.complaintsByCategory).map(([k, v]) => (
+              <div key={k} className="flex items-center justify-between text-sm">
+                <span className="text-slate-600">{k}</span>
+                <span className="font-semibold text-slate-700">{String(v)}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
     </div>
   );
 }
@@ -78,6 +93,9 @@ export function Dashboard() {
     base.push({ label: t('dashboard.statActiveProjects'), value: stats.activeProjects, icon: <FolderKanban size={18} />, accent: 'brand' });
     base.push({ label: t('dashboard.statAvgProgress'), value: `${stats.avgProgress}%`, icon: <TrendingUp size={18} />, accent: 'green' });
     base.push({ label: t('dashboard.statCommunityEvents'), value: stats.events, icon: <CalendarDays size={18} />, accent: 'purple' });
+    if (stats.avgSatisfaction !== undefined) {
+      base.push({ label: t('dashboard.statSatisfaction'), value: `${stats.avgSatisfaction}%`, icon: <Smile size={18} />, accent: 'green' });
+    }
     return base;
   }, [stats, level, t]);
 

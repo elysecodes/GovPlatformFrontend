@@ -204,7 +204,7 @@ export function Profile() {
                 </div>
                 <form onSubmit={disableMfa} className="space-y-3">
                   <p className="text-xs text-slate-400">To disable, provide a current code from your authenticator app or your account password.</p>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <Field label="Code">
                       <Input value={mfaDisableForm.code ?? ''} onChange={(e) => setMfaDisableForm({ ...mfaDisableForm, code: e.target.value.replace(/\D/g, '').slice(0, 6) })} inputMode="numeric" placeholder="000000" />
                     </Field>

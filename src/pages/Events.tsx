@@ -12,6 +12,8 @@ export function Events() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
+  const [status, setStatus] = useState('');
+  const [sort, setSort] = useState('');
   const [showNew, setShowNew] = useState(false);
   const [form, setForm] = useState<any>({});
   const [error, setError] = useState('');
@@ -20,7 +22,7 @@ export function Events() {
   async function load() {
     setLoading(true);
     try {
-      const res = await api.get<Paginated<GovEvent>>('/events', { params: { page, limit: 15 } });
+      const res = await api.get<Paginated<GovEvent>>('/events', { params: { page, limit: 15, status: status || undefined, sort: sort || undefined } });
       setItems(res.data.items);
       setPages(res.data.pagination.pages);
     } catch (e) {
@@ -29,7 +31,7 @@ export function Events() {
       setLoading(false);
     }
   }
-  useEffect(() => { void load(); }, [page]);
+  useEffect(() => { void load(); }, [page, status, sort]);
 
   async function create(e: FormEvent) {
     e.preventDefault();
@@ -65,6 +67,25 @@ export function Events() {
         actions={isAdmin && <Button onClick={() => setShowNew(true)}><Plus size={16} /> New event</Button>}
       />
 
+      <Card className="mb-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <Select className="!w-48 shrink-0" value={status} onChange={(e) => { setPage(1); setStatus(e.target.value); }}>
+            <option value="">All statuses</option>
+            {['PLANNED', 'ACTIVE', 'COMPLETED', 'CANCELLED'].map((s) => (
+              <option key={s} value={s}>{s.charAt(0) + s.slice(1).toLowerCase()}</option>
+            ))}
+          </Select>
+          <span className="ml-auto inline-flex items-center gap-2">
+            <span className="text-xs text-slate-400">Sort:</span>
+            <Select className="!w-40 shrink-0" value={sort} onChange={(e) => { setPage(1); setSort(e.target.value); }}>
+              <option value="">Latest</option>
+              <option value="oldest">Soonest</option>
+              <option value="name">Name A-Z</option>
+            </Select>
+          </span>
+        </div>
+      </Card>
+
       {loading ? <Spinner /> : items.length === 0 ? (
         <Card><EmptyState title="No events" /></Card>
       ) : (
@@ -92,7 +113,7 @@ export function Events() {
       <Modal open={showNew} onClose={() => setShowNew(false)} title="Create a community event" wide>
         <form onSubmit={create} className="space-y-4">
           {error && <div className="rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2">{error}</div>}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Title" required>
               <Input value={form.title ?? ''} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
             </Field>
@@ -103,7 +124,7 @@ export function Events() {
           <Field label="Description" required>
             <Textarea rows={3} value={form.description ?? ''} onChange={(e) => setForm({ ...form, description: e.target.value })} required />
           </Field>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Location"><Input value={form.location ?? ''} onChange={(e) => setForm({ ...form, location: e.target.value })} /></Field>
             <Field label="Organizer"><Input value={form.organizer ?? ''} onChange={(e) => setForm({ ...form, organizer: e.target.value })} /></Field>
           </div>

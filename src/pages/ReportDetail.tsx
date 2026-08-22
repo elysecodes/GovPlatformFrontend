@@ -116,7 +116,7 @@ export function ReportDetail() {
       <Modal open={showReview} onClose={() => setShowReview(false)} title="Review report">
         <div className="space-y-4">
           <Field label="Decision">
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               {[
                 { action: 'APPROVED', label: 'Approve', icon: <CheckCircle2 size={15} /> },
                 { action: 'REJECTED', label: 'Reject', icon: <XCircle size={15} /> },

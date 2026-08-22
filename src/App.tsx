@@ -20,6 +20,9 @@ import { Notifications } from './pages/Notifications';
 import { Users } from './pages/Users';
 import { Households } from './pages/Households';
 import { Citizens } from './pages/Citizens';
+import { Tasks } from './pages/Tasks';
+import { Meetings } from './pages/Meetings';
+import { Cooperatives } from './pages/Cooperatives';
 import { AuditLogs } from './pages/AuditLogs';
 import { Profile } from './pages/Profile';
 import { ChangePassword } from './pages/ChangePassword';
@@ -28,6 +31,13 @@ function Protected({ children }: { children: JSX.Element }) {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" replace />;
   if (user.mustChangePassword) return <Navigate to="/change-password" replace />;
+  return children;
+}
+
+/** Auth-only guard: does NOT redirect mustChangePassword users (used by /change-password itself). */
+function RequireAuth({ children }: { children: JSX.Element }) {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
   return children;
 }
 
@@ -47,7 +57,7 @@ function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
-      <Route path="/change-password" element={<Protected><ChangePassword /></Protected>} />
+      <Route path="/change-password" element={<RequireAuth><ChangePassword /></RequireAuth>} />
 
       <Route
         path="/*"
@@ -72,6 +82,9 @@ function App() {
                 <Route path="/users" element={<RequireRole roles={['SUPER_ADMIN', 'PROVINCE_ADMIN', 'DISTRICT_ADMIN', 'SECTOR_ADMIN', 'CELL_ADMIN']}><Users /></RequireRole>} />
                 <Route path="/households" element={<RequireRole roles={['SUPER_ADMIN', 'PROVINCE_ADMIN', 'DISTRICT_ADMIN', 'SECTOR_ADMIN', 'CELL_ADMIN', 'VILLAGE_ADMIN']}><Households /></RequireRole>} />
                 <Route path="/citizens" element={<RequireRole roles={ADMIN_ROLES}><Citizens /></RequireRole>} />
+                <Route path="/tasks" element={<RequireRole roles={ADMIN_ROLES}><Tasks /></RequireRole>} />
+                <Route path="/meetings" element={<Meetings />} />
+                <Route path="/cooperatives" element={<RequireRole roles={ADMIN_ROLES}><Cooperatives /></RequireRole>} />
                 <Route path="/audit-logs" element={<RequireRole roles={['SUPER_ADMIN', 'PROVINCE_ADMIN', 'DISTRICT_ADMIN', 'SECTOR_ADMIN']}><AuditLogs /></RequireRole>} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="*" element={<Navigate to="/" replace />} />

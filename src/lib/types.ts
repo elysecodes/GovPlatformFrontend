@@ -64,6 +64,7 @@ export interface Complaint {
   comments?: any[];
   escalations?: any[];
   attachments?: any[];
+  feedback?: { id: number; rating: number; comment?: string; createdAt: string } | null;
 }
 
 export interface ServiceRequest {
@@ -121,6 +122,7 @@ export interface Project {
   progress: number;
   status: string;
   budget: number;
+  budgetSpent?: number;
   fundingSource?: string;
   beneficiaries: number;
   responsibleOfficer?: { id: number; fullName: string };

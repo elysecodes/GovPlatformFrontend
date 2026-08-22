@@ -12,6 +12,8 @@ export function Announcements() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
+  const [status, setStatus] = useState('');
+  const [sort, setSort] = useState('');
   const [showNew, setShowNew] = useState(false);
   const [form, setForm] = useState<any>({ targetLevel: user ? Math.min(6, user.level + 1) : 6, scopeAll: true });
   const [error, setError] = useState('');
@@ -20,7 +22,7 @@ export function Announcements() {
   async function load() {
     setLoading(true);
     try {
-      const res = await api.get<Paginated<Announcement>>('/announcements', { params: { page, limit: 15 } });
+      const res = await api.get<Paginated<Announcement>>('/announcements', { params: { page, limit: 15, status: status || undefined, sort: sort || undefined } });
       setItems(res.data.items);
       setPages(res.data.pagination.pages);
     } catch (e) {
@@ -29,7 +31,7 @@ export function Announcements() {
       setLoading(false);
     }
   }
-  useEffect(() => { void load(); }, [page]);
+  useEffect(() => { void load(); }, [page, status, sort]);
 
   async function create(e: FormEvent) {
     e.preventDefault();
@@ -55,6 +57,25 @@ export function Announcements() {
         breadcrumb="Northern Province / Announcements"
         actions={isAdmin && <Button onClick={() => setShowNew(true)}><Plus size={16} /> New announcement</Button>}
       />
+
+      <Card className="mb-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <Select className="!w-48 shrink-0" value={status} onChange={(e) => { setPage(1); setStatus(e.target.value); }}>
+            <option value="">All statuses</option>
+            {['DRAFT', 'SCHEDULED', 'PUBLISHED', 'EXPIRED', 'ARCHIVED'].map((s) => (
+              <option key={s} value={s}>{s.charAt(0) + s.slice(1).toLowerCase()}</option>
+            ))}
+          </Select>
+          <span className="ml-auto inline-flex items-center gap-2">
+            <span className="text-xs text-slate-400">Sort:</span>
+            <Select className="!w-40 shrink-0" value={sort} onChange={(e) => { setPage(1); setSort(e.target.value); }}>
+              <option value="">Newest</option>
+              <option value="oldest">Oldest</option>
+              <option value="title">Title A-Z</option>
+            </Select>
+          </span>
+        </div>
+      </Card>
 
       {loading ? <Spinner /> : items.length === 0 ? (
         <Card><EmptyState title="No announcements" /></Card>
@@ -103,9 +124,12 @@ export function Announcements() {
           <Field label="Expiration date">
             <Input type="date" value={form.expirationDate ?? ''} onChange={(e) => setForm({ ...form, expirationDate: e.target.value })} />
           </Field>
+          <Field label="Publish date" hint="Leave empty to publish now, or set a future date to schedule">
+            <Input type="datetime-local" value={form.publicationDate ?? ''} onChange={(e) => setForm({ ...form, publicationDate: e.target.value })} />
+          </Field>
           <div className="flex justify-end gap-2">
             <Button type="button" variant="secondary" onClick={() => setShowNew(false)}>Cancel</Button>
-            <Button type="submit" loading={saving}>Publish</Button>
+            <Button type="submit" loading={saving}>{form.publicationDate ? 'Schedule' : 'Publish'}</Button>
           </div>
         </form>
       </Modal>

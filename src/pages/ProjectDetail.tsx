@@ -98,6 +98,7 @@ export function ProjectDetail() {
             <div className="space-y-3 text-sm">
               <div className="flex justify-between"><span className="text-slate-500">Status</span><StatusBadge status={project.status} /></div>
               <div className="flex justify-between"><span className="text-slate-500">Budget</span><span className="text-slate-800">{money(Number(project.budget))}</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">Spent to date</span><span className="text-slate-800">{money(Number(project.budgetSpent))}</span></div>
               <div className="flex justify-between"><span className="text-slate-500">Funding source</span><span className="text-slate-800">{project.fundingSource ?? '—'}</span></div>
               <div className="flex justify-between"><span className="text-slate-500">Beneficiaries</span><span className="text-slate-800">{project.beneficiaries}</span></div>
               <div className="flex justify-between"><span className="text-slate-500">Start</span><span className="text-slate-800">{formatDate(project.startDate)}</span></div>
@@ -108,7 +109,7 @@ export function ProjectDetail() {
 
           {isAdmin && (
             <Card title="Manage">
-              <Button variant="secondary" className="w-full justify-center" onClick={() => setEditForm({ status: project.status, progress: project.progress })}>
+              <Button variant="secondary" className="w-full justify-center" onClick={() => setEditForm({ status: project.status, progress: project.progress, budgetSpent: Number(project.budgetSpent), fundingSource: project.fundingSource ?? '' })}>
                 Edit status / progress
               </Button>
             </Card>
@@ -141,6 +142,12 @@ export function ProjectDetail() {
             </Field>
             <Field label="Progress (%)">
               <Input type="number" min={0} max={100} value={editForm.progress} onChange={(e) => setEditForm({ ...editForm, progress: Number(e.target.value) })} />
+            </Field>
+            <Field label="Budget spent to date (RWF)">
+              <Input type="number" value={editForm.budgetSpent ?? ''} onChange={(e) => setEditForm({ ...editForm, budgetSpent: e.target.value })} />
+            </Field>
+            <Field label="Funding source">
+              <Input value={editForm.fundingSource ?? ''} onChange={(e) => setEditForm({ ...editForm, fundingSource: e.target.value })} />
             </Field>
             <div className="flex justify-end gap-2">
               <Button type="button" variant="secondary" onClick={() => setEditForm(null)}>Cancel</Button>

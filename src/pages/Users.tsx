@@ -3,8 +3,10 @@ import { Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { api, apiError } from '../lib/api';
 import { useAuth } from '../lib/auth';
-import { Button, Card, EmptyState, Field, Input, Modal, PageHeader, Pagination, Select, Spinner, StatusBadge, Table, formatDate } from '../components/ui';
+import { Button, Card, EmptyState, Field, Input, Modal, PageHeader, Pagination, SearchInput, Select, Spinner, StatusBadge, Table, formatDate } from '../components/ui';
 import { Paginated } from '../lib/types';
+import { useDebouncedValue } from '../hooks/useDebouncedValue';
+import { ExportCsvButton } from '../components/ExportCsv';
 
 interface Unit { id: number; name: string }
 interface AdminUser {
@@ -23,6 +25,9 @@ export function Users() {
   const [form, setForm] = useState<any>({});
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState('');
+  const [sort, setSort] = useState('');
+  const debouncedSearch = useDebouncedValue(search);
 
   const [districts, setDistricts] = useState<Unit[]>([]);
   const [sectors, setSectors] = useState<Unit[]>([]);
@@ -41,7 +46,10 @@ export function Users() {
   async function load() {
     setLoading(true);
     try {
-      const res = await api.get<Paginated<AdminUser>>('/admin/users', { params: { page, limit: 15 } });
+      const params: any = { page, limit: 15 };
+      if (debouncedSearch) params.q = debouncedSearch;
+      if (sort) params.sort = sort;
+      const res = await api.get<Paginated<AdminUser>>('/admin/users', { params });
       setItems(res.data.items);
       setPages(res.data.pagination.pages);
     } catch (e) {
@@ -50,7 +58,7 @@ export function Users() {
       setLoading(false);
     }
   }
-  useEffect(() => { void load(); }, [page]);
+  useEffect(() => { void load(); }, [page, debouncedSearch, sort]);
   useEffect(() => { api.get('/catalog/districts').then((r) => setDistricts(r.data.items)).catch(() => {}); }, []);
 
   async function loadSectors(d: number) { const r = await api.get(`/catalog/districts/${d}/sectors`); setSectors(r.data.items); }
@@ -102,8 +110,33 @@ export function Users() {
         title={t('users.title')}
         subtitle={t('users.subtitle')}
         breadcrumb="Northern Province / Accounts"
-        actions={creatableRoles.length > 0 && <Button onClick={() => setShowNew(true)}><Plus size={16} /> {t('users.newAccount')}</Button>}
+        actions={creatableRoles.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            <ExportCsvButton path="/admin/users" filename="users" />
+            <Button onClick={() => setShowNew(true)}><Plus size={16} /> {t('users.newAccount')}</Button>
+          </div>
+        )}
       />
+
+      <Card className="mb-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <SearchInput
+            value={search}
+            onChange={(v) => { setSearch(v); setPage(1); }}
+            placeholder="Search by name, username or email..."
+            className="w-full md:w-72"
+          />
+          <span className="ml-auto inline-flex items-center gap-2">
+            <span className="text-xs text-slate-400">Sort:</span>
+            <Select className="!w-40 shrink-0" value={sort} onChange={(e) => { setPage(1); setSort(e.target.value); }}>
+              <option value="">Newest</option>
+              <option value="oldest">Oldest</option>
+              <option value="name">Name A-Z</option>
+              <option value="role">By role</option>
+            </Select>
+          </span>
+        </div>
+      </Card>
 
       {loading ? <Spinner /> : items.length === 0 ? (
         <Card><EmptyState title={t('users.noAccounts')} /></Card>
@@ -145,7 +178,7 @@ export function Users() {
       <Modal open={showNew} onClose={() => setShowNew(false)} title={t('users.createModalTitle')} wide>
         <form onSubmit={create} className="space-y-4">
           {error && <div className="rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2">{error}</div>}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label={t('users.fullName')} required>
               <Input value={form.fullName ?? ''} onChange={(e) => setForm({ ...form, fullName: e.target.value })} required />
             </Field>
@@ -169,7 +202,7 @@ export function Users() {
             </Field>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-100">
             <Field label={t('users.district')} required>
               <Select value={form.districtId ?? ''} onChange={(e) => { loadSectors(Number(e.target.value)); setForm({ ...form, provinceId: 1, districtId: Number(e.target.value), sectorId: undefined, cellId: undefined, villageId: undefined }); setSectors([]); setCells([]); setVillages([]); }} required>
                 <option value="">{t('users.select')}</option>

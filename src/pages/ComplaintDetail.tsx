@@ -20,6 +20,8 @@ export function ComplaintDetail() {
   const [comment, setComment] = useState('');
   const [officers, setOfficers] = useState<any[]>([]);
   const [officerId, setOfficerId] = useState('');
+  const [feedback, setFeedback] = useState<any>({ rating: 5, comment: '' });
+  const [savingFeedback, setSavingFeedback] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -76,6 +78,20 @@ export function ComplaintDetail() {
       void load();
     } catch (err) {
       setError(apiError(err));
+    }
+  }
+
+  async function submitFeedback(e: FormEvent) {
+    e.preventDefault();
+    setSavingFeedback(true);
+    try {
+      await api.post(`/complaints/${id}/feedback`, feedback);
+      setFeedback({ rating: 5, comment: '' });
+      void load();
+    } catch (err) {
+      setError(apiError(err));
+    } finally {
+      setSavingFeedback(false);
     }
   }
 
@@ -182,6 +198,38 @@ export function ComplaintDetail() {
               {complaint.resolutionDate && <div>Resolved: {formatDate(complaint.resolutionDate)}</div>}
             </div>
           </Card>
+
+          {isAdmin && complaint.feedback && (
+            <Card title="Citizen feedback">
+              <div className="flex items-center gap-1 text-amber-500 text-sm">
+                {'★'.repeat(complaint.feedback.rating)}{'☆'.repeat(5 - complaint.feedback.rating)}
+              </div>
+              {complaint.feedback.comment && <p className="text-sm text-slate-600 mt-2">{complaint.feedback.comment}</p>}
+              <p className="text-[11px] text-slate-400 mt-2">{formatDate(complaint.feedback.createdAt)}</p>
+            </Card>
+          )}
+
+          {!isAdmin && ['RESOLVED', 'CLOSED'].includes(complaint.status) && !complaint.feedback && (
+            <Card title="How was your complaint handled?">
+              <form onSubmit={submitFeedback} className="space-y-3">
+                {error && <div className="rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2">{error}</div>}
+                <Field label="Satisfaction rating">
+                  <div className="flex gap-1 text-2xl">
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <button key={n} type="button" onClick={() => setFeedback({ ...feedback, rating: n })}
+                        className={`transition-colors ${n <= feedback.rating ? 'text-amber-500' : 'text-slate-200 hover:text-amber-300'}`}>
+                        ★
+                      </button>
+                    ))}
+                  </div>
+                </Field>
+                <Field label="Comment (optional)">
+                  <Textarea rows={3} value={feedback.comment} onChange={(e) => setFeedback({ ...feedback, comment: e.target.value })} placeholder="Tell us what could be improved..." />
+                </Field>
+                <Button type="submit" loading={savingFeedback} className="w-full justify-center">Submit feedback</Button>
+              </form>
+            </Card>
+          )}
         </div>
       </div>
 

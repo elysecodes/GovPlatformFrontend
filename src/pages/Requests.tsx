@@ -3,8 +3,10 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { api, apiError } from '../lib/api';
 import { useAuth } from '../lib/auth';
-import { Button, Card, EmptyState, Field, Input, Modal, PageHeader, Pagination, Select, Spinner, StatusBadge, Table, Textarea, formatDate } from '../components/ui';
+import { Button, Card, EmptyState, Field, Input, Modal, PageHeader, Pagination, SearchInput, Select, Spinner, StatusBadge, Table, Textarea, formatDate } from '../components/ui';
 import { Paginated, ServiceRequest } from '../lib/types';
+import { useDebouncedValue } from '../hooks/useDebouncedValue';
+import { ExportCsvButton } from '../components/ExportCsv';
 
 interface Unit { id: number; name: string }
 
@@ -21,6 +23,8 @@ export function Requests() {
   const [pages, setPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [status, setStatus] = useState('');
+  const [serviceTypeId, setServiceTypeId] = useState('');
+  const [sort, setSort] = useState('');
   const [types, setTypes] = useState<any[]>([]);
 
   const [districts, setDistricts] = useState<Unit[]>([]);
@@ -30,12 +34,17 @@ export function Requests() {
   const [form, setForm] = useState<any>({});
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search);
 
   async function load() {
     setLoading(true);
     try {
       const params: any = { page, limit: 15 };
       if (status) params.status = status;
+      if (serviceTypeId) params.serviceTypeId = serviceTypeId;
+      if (sort) params.sort = sort;
+      if (debouncedSearch) params.q = debouncedSearch;
       const res = await api.get<Paginated<ServiceRequest>>('/requests', { params });
       setItems(res.data.items);
       setPages(res.data.pagination.pages);
@@ -47,7 +56,7 @@ export function Requests() {
     }
   }
 
-  useEffect(() => { void load(); }, [page, status]);
+  useEffect(() => { void load(); }, [page, status, serviceTypeId, sort, debouncedSearch]);
   useEffect(() => { api.get('/requests/types').then((r) => setTypes(r.data.items)).catch(() => {}); }, []);
   useEffect(() => { api.get('/catalog/districts').then((r) => setDistricts(r.data.items)).catch(() => {}); }, []);
 
@@ -75,7 +84,12 @@ export function Requests() {
         title="Service Requests"
         subtitle={`${total} records`}
         breadcrumb="Northern Province / Service Requests"
-        actions={<Button onClick={() => navigate('/requests/new')}><Plus size={16} /> New request</Button>}
+        actions={
+          <div className="flex flex-wrap gap-2">
+            <ExportCsvButton path="/requests" filename="requests" />
+            <Button onClick={() => navigate('/requests/new')}><Plus size={16} /> New request</Button>
+          </div>
+        }
       />
 
       {showNew && (
@@ -98,7 +112,7 @@ export function Requests() {
               <Input value={form.location ?? ''} onChange={(e) => setForm({ ...form, location: e.target.value })} />
             </Field>
 
-            <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-100">
               <Field label="District" required>
                 <Select value={form.districtId ?? ''} onChange={(e) => { loadSectors(Number(e.target.value)); setForm({ ...form, districtId: Number(e.target.value), sectorId: undefined, cellId: undefined, villageId: undefined }); setSectors([]); setCells([]); setVillages([]); }} required>
                   <option value="">Select</option>
@@ -135,13 +149,31 @@ export function Requests() {
 
       <Card className="mb-4">
         <div className="flex items-center gap-3">
-          <Select className="w-48" value={status} onChange={(e) => { setPage(1); setStatus(e.target.value); }}>
+          <SearchInput
+            value={search}
+            onChange={(v) => { setSearch(v); setPage(1); }}
+            placeholder="Search by title or reference..."
+            className="w-full md:w-72"
+          />
+          <Select className="!w-48 shrink-0" value={serviceTypeId} onChange={(e) => { setPage(1); setServiceTypeId(e.target.value); }}>
+            <option value="">All services</option>
+            {types.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+          </Select>
+          <Select className="!w-48 shrink-0" value={status} onChange={(e) => { setPage(1); setStatus(e.target.value); }}>
             <option value="">All statuses</option>
             {['SUBMITTED', 'RECEIVED', 'UNDER_REVIEW', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'CLOSED', 'ESCALATED'].map((s) => (
               <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
             ))}
           </Select>
           <span className="text-xs text-slate-400">{isCitizen ? 'Your requests' : 'Requests within your jurisdiction'}</span>
+          <span className="ml-auto inline-flex items-center gap-2">
+            <span className="text-xs text-slate-400">Sort:</span>
+            <Select className="!w-40 shrink-0" value={sort} onChange={(e) => { setPage(1); setSort(e.target.value); }}>
+              <option value="">Newest</option>
+              <option value="oldest">Oldest</option>
+              <option value="status">By status</option>
+            </Select>
+          </span>
         </div>
       </Card>
 

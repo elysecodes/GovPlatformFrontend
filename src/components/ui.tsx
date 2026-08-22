@@ -1,5 +1,5 @@
 import { ReactNode, SelectHTMLAttributes, InputHTMLAttributes, TextareaHTMLAttributes, ButtonHTMLAttributes } from 'react';
-import { Loader2, Languages } from 'lucide-react';
+import { Loader2, Languages, Search, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import i18n, { LANG_KEY } from '../i18n';
 
@@ -13,7 +13,7 @@ export function Card({ title, subtitle, actions, children, className }: {
   return (
     <div className={cx('bg-white rounded-xl border border-slate-200 shadow-sm', className)}>
       {(title || actions) && (
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+        <div className="flex items-center justify-between flex-wrap gap-2 px-5 py-4 border-b border-slate-100">
           <div>
             {title && <h3 className="font-semibold text-slate-800">{title}</h3>}
             {subtitle && <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>}
@@ -102,6 +102,33 @@ export function Select({ className, children, ...rest }: SelectHTMLAttributes<HT
   );
 }
 
+export function SearchInput({ value, onChange, placeholder, className }: {
+  value: string; onChange: (v: string) => void; placeholder?: string; className?: string;
+}) {
+  return (
+    <div className={cx('relative', className)}>
+      <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+      <Input
+        type="search"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder ?? 'Search...'}
+        className="pl-9 pr-8"
+      />
+      {value && (
+        <button
+          type="button"
+          onClick={() => onChange('')}
+          aria-label="Clear search"
+          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+        >
+          <X size={14} />
+        </button>
+      )}
+    </div>
+  );
+}
+
 export function Textarea({ className, ...rest }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
     <textarea
@@ -186,7 +213,7 @@ export function Modal({ open, onClose, title, children, wide }: {
 }) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-2 sm:p-4" onClick={onClose}>
       <div
         className={cx('bg-white rounded-xl shadow-xl w-full max-h-[90vh] overflow-y-auto', wide ? 'max-w-3xl' : 'max-w-lg')}
         onClick={(e) => e.stopPropagation()}
@@ -223,7 +250,7 @@ export function EmptyState({ title, children }: { title: string; children?: Reac
 export function Pagination({ page, pages, onChange }: { page: number; pages: number; onChange: (p: number) => void }) {
   const { t } = useTranslation();
   return (
-    <div className="flex items-center justify-between mt-4 text-sm">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-4 text-sm">
       <span className="text-slate-500 text-xs">{t('common.page', { page, pages })}</span>
       <div className="flex gap-2">
         <Button variant="secondary" disabled={page <= 1} onClick={() => onChange(page - 1)}>{t('common.prev')}</Button>

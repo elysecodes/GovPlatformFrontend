@@ -89,7 +89,7 @@ export function Register() {
             <Field label={t('register.fullName')} required>
               <Input value={form.fullName ?? ''} onChange={(e) => setForm({ ...form, fullName: e.target.value })} required />
             </Field>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label={t('register.username')} required>
                 <Input value={form.username ?? ''} onChange={(e) => setForm({ ...form, username: e.target.value })} required />
               </Field>
@@ -100,7 +100,7 @@ export function Register() {
             <Field label={t('register.email')}>
               <Input type="email" value={form.email ?? ''} onChange={(e) => setForm({ ...form, email: e.target.value })} />
             </Field>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label={t('register.nationalId')}>
                 <Input value={form.nationalId ?? ''} onChange={(e) => setForm({ ...form, nationalId: e.target.value })} />
               </Field>
@@ -118,7 +118,7 @@ export function Register() {
 
             <div className="pt-2 border-t border-slate-100">
               <p className="text-xs text-slate-500 mb-3">{t('register.location')}</p>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Field label={t('register.district')} required>
                   <Select value={form.districtId ?? ''} onChange={(e) => { loadSectors(Number(e.target.value)); setForm({ ...form, districtId: Number(e.target.value), sectorId: undefined, cellId: undefined, villageId: undefined }); setSectors([]); setCells([]); setVillages([]); }}>
                     <option value="">{t('register.select')}</option>

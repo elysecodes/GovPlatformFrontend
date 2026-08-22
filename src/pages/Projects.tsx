@@ -119,14 +119,15 @@ export function Projects() {
           <Field label="Location">
             <Input value={form.location ?? ''} onChange={(e) => setForm({ ...form, location: e.target.value })} />
           </Field>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Start date"><Input type="date" value={form.startDate ?? ''} onChange={(e) => setForm({ ...form, startDate: e.target.value })} /></Field>
             <Field label="Expected completion"><Input type="date" value={form.expectedEndDate ?? ''} onChange={(e) => setForm({ ...form, expectedEndDate: e.target.value })} /></Field>
             <Field label="Budget (RWF)"><Input type="number" value={form.budget ?? ''} onChange={(e) => setForm({ ...form, budget: e.target.value })} /></Field>
             <Field label="Funding source"><Input value={form.fundingSource ?? ''} onChange={(e) => setForm({ ...form, fundingSource: e.target.value })} /></Field>
             <Field label="Beneficiaries"><Input type="number" value={form.beneficiaries ?? ''} onChange={(e) => setForm({ ...form, beneficiaries: e.target.value })} /></Field>
+            <Field label="Budget spent to date (RWF)"><Input type="number" value={form.budgetSpent ?? ''} onChange={(e) => setForm({ ...form, budgetSpent: e.target.value })} /></Field>
           </div>
-          <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-100">
             <Field label="District" required>
               <Select value={form.districtId ?? ''} onChange={(e) => { loadSectors(Number(e.target.value)); setForm({ ...form, districtId: Number(e.target.value), sectorId: undefined, cellId: undefined, villageId: undefined }); setSectors([]); setCells([]); setVillages([]); }} required>
                 <option value="">Select</option>

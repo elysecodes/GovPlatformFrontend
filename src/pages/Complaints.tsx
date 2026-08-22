@@ -3,8 +3,10 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { api, apiError } from '../lib/api';
 import { useAuth } from '../lib/auth';
-import { Button, Card, EmptyState, Field, Input, Modal, PageHeader, Pagination, Select, Spinner, StatusBadge, Table, Textarea, formatDate } from '../components/ui';
+import { Button, Card, EmptyState, Field, Input, Modal, PageHeader, Pagination, SearchInput, Select, Spinner, StatusBadge, Table, Textarea, formatDate } from '../components/ui';
 import { Complaint, Paginated } from '../lib/types';
+import { useDebouncedValue } from '../hooks/useDebouncedValue';
+import { ExportCsvButton } from '../components/ExportCsv';
 
 interface Unit { id: number; name: string }
 
@@ -21,6 +23,8 @@ export function Complaints() {
   const [pages, setPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [status, setStatus] = useState('');
+  const [categoryId, setCategoryId] = useState('');
+  const [sort, setSort] = useState('');
   const [categories, setCategories] = useState<any[]>([]);
 
   const [districts, setDistricts] = useState<Unit[]>([]);
@@ -30,12 +34,17 @@ export function Complaints() {
   const [form, setForm] = useState<any>({});
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search);
 
   async function load() {
     setLoading(true);
     try {
       const params: any = { page, limit: 15 };
       if (status) params.status = status;
+      if (categoryId) params.categoryId = categoryId;
+      if (sort) params.sort = sort;
+      if (debouncedSearch) params.q = debouncedSearch;
       const res = await api.get<Paginated<Complaint>>('/complaints', { params });
       setItems(res.data.items);
       setPages(res.data.pagination.pages);
@@ -47,7 +56,7 @@ export function Complaints() {
     }
   }
 
-  useEffect(() => { void load(); }, [page, status]);
+  useEffect(() => { void load(); }, [page, status, categoryId, sort, debouncedSearch]);
   useEffect(() => { api.get('/complaints/categories').then((r) => setCategories(r.data.items)).catch(() => {}); }, []);
   useEffect(() => { api.get('/catalog/districts').then((r) => setDistricts(r.data.items)).catch(() => {}); }, []);
 
@@ -76,9 +85,12 @@ export function Complaints() {
         subtitle={`${total} records`}
         breadcrumb="Northern Province / Complaints"
         actions={
-          <Button onClick={() => navigate('/complaints/new')}>
-            <Plus size={16} /> New complaint
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <ExportCsvButton path="/complaints" filename="complaints" />
+            <Button onClick={() => navigate('/complaints/new')}>
+              <Plus size={16} /> New complaint
+            </Button>
+          </div>
         }
       />
 
@@ -86,7 +98,7 @@ export function Complaints() {
         <Modal open onClose={() => navigate('/complaints')} title="Submit a complaint" wide>
           {error && <div className="mb-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2">{error}</div>}
           <form onSubmit={onSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label="Category" required>
                 <Select value={form.categoryId ?? ''} onChange={(e) => setForm({ ...form, categoryId: Number(e.target.value) })} required>
                   <option value="">Select category</option>
@@ -112,7 +124,7 @@ export function Complaints() {
               <Input value={form.location ?? ''} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="Landmark, street or area" />
             </Field>
 
-            <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-100">
               <Field label="District" required>
                 <Select value={form.districtId ?? ''} onChange={(e) => { loadSectors(Number(e.target.value)); setForm({ ...form, districtId: Number(e.target.value), sectorId: undefined, cellId: undefined, villageId: undefined }); setSectors([]); setCells([]); setVillages([]); }} required>
                   <option value="">Select</option>
@@ -149,13 +161,32 @@ export function Complaints() {
 
       <Card className="mb-4">
         <div className="flex flex-wrap items-center gap-3">
-          <Select className="w-48" value={status} onChange={(e) => { setPage(1); setStatus(e.target.value); }}>
+          <SearchInput
+            value={search}
+            onChange={(v) => { setSearch(v); setPage(1); }}
+            placeholder="Search by title or reference..."
+            className="w-full md:w-72"
+          />
+          <Select className="!w-48 shrink-0" value={categoryId} onChange={(e) => { setPage(1); setCategoryId(e.target.value); }}>
+            <option value="">All categories</option>
+            {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </Select>
+          <Select className="!w-48 shrink-0" value={status} onChange={(e) => { setPage(1); setStatus(e.target.value); }}>
             <option value="">All statuses</option>
             {['SUBMITTED', 'RECEIVED', 'UNDER_REVIEW', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'CLOSED', 'ESCALATED'].map((s) => (
               <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
             ))}
           </Select>
           <span className="text-xs text-slate-400">{isCitizen ? 'Your complaints' : 'Complaints within your jurisdiction'}</span>
+          <span className="ml-auto inline-flex items-center gap-2">
+            <span className="text-xs text-slate-400">Sort:</span>
+            <Select className="!w-40 shrink-0" value={sort} onChange={(e) => { setPage(1); setSort(e.target.value); }}>
+              <option value="">Newest</option>
+              <option value="oldest">Oldest</option>
+              <option value="status">By status</option>
+              <option value="priority">By priority</option>
+            </Select>
+          </span>
         </div>
       </Card>
 

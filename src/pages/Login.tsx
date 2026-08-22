@@ -1,19 +1,10 @@
 import { FormEvent, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShieldCheck, KeyRound, Zap } from 'lucide-react';
+import { ShieldCheck, KeyRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../lib/auth';
 import { apiError } from '../lib/api';
 import { Button, Field, Input, LanguageSwitcher } from '../components/ui';
-
-const DEMO_ACCOUNTS: { role: string; username: string; password: string }[] = [
-  { role: 'PROVINCE_ADMIN', username: 'province', password: 'Admin@123' },
-  { role: 'DISTRICT_ADMIN', username: 'district', password: 'Admin@123' },
-  { role: 'SECTOR_ADMIN', username: 'sector', password: 'Admin@123' },
-  { role: 'CELL_ADMIN', username: 'cell', password: 'Admin@123' },
-  { role: 'VILLAGE_ADMIN', username: 'village', password: 'Admin@123' },
-  { role: 'CITIZEN', username: 'citizen', password: 'Citizen@123' },
-];
 
 export function Login() {
   const { login, completeMfaLogin } = useAuth();
@@ -23,7 +14,6 @@ export function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [demoUser, setDemoUser] = useState('');
 
   // 2FA challenge step
   const [mfaToken, setMfaToken] = useState('');
@@ -49,19 +39,6 @@ export function Login() {
       setError(apiError(err));
     } finally {
       setLoading(false);
-    }
-  }
-
-  async function onDemoLogin(acc: (typeof DEMO_ACCOUNTS)[number]) {
-    setError('');
-    setDemoUser(acc.username);
-    try {
-      const result = await login(acc.username, acc.password);
-      await finishLogin(result);
-    } catch (err) {
-      setError(apiError(err));
-    } finally {
-      setDemoUser('');
     }
   }
 
@@ -153,39 +130,12 @@ export function Login() {
                 <Button type="submit" loading={loading} className="w-full justify-center">{t('login.signIn')}</Button>
               </form>
 
-              <div className="mt-6 pt-5 border-t border-slate-100">
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 mb-2">
-                  <Zap size={14} className="text-amber-500" />
-                  {t('login.demoTitle')}
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  {DEMO_ACCOUNTS.map((acc) => (
-                    <Button
-                      key={acc.username}
-                      type="button"
-                      variant="secondary"
-                      loading={demoUser === acc.username}
-                      onClick={() => onDemoLogin(acc)}
-                      className="justify-center text-xs"
-                    >
-                      {t(`role.${acc.role}`)}
-                    </Button>
-                  ))}
-                </div>
-                <p className="mt-2 text-[11px] text-slate-400">{t('login.demoHint', { code: 'Admin@123' })}</p>
-              </div>
-
               <div className="mt-6 text-center">
                 <span className="text-sm text-slate-500">{t('login.areYouCitizen')} </span>
                 <Link to="/register" className="text-sm text-brand-700 font-medium hover:underline">{t('login.createAccount')}</Link>
               </div>
             </>
           )}
-        </div>
-
-        <div className="mt-4 text-center text-xs text-white/50">
-          {t('login.demoFooterAdmins')} <code className="bg-white/10 px-1 rounded">province · district · sector · cell · village</code>{' '}
-          {t('login.adminPassword', { code: 'Admin@123' })} · {t('login.demoFooterCitizen')} <code>citizen</code> / <code>Citizen@123</code>
         </div>
       </div>
     </div>

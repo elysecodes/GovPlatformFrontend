@@ -2,8 +2,10 @@ import { FormEvent, useEffect, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { api, apiError } from '../lib/api';
 import { useAuth } from '../lib/auth';
-import { Button, Card, EmptyState, Field, Input, Modal, PageHeader, Pagination, Select, Spinner, Table, formatDate } from '../components/ui';
+import { Button, Card, EmptyState, Field, Input, Modal, PageHeader, Pagination, SearchInput, Select, Spinner, Table, formatDate } from '../components/ui';
 import { Paginated } from '../lib/types';
+import { useDebouncedValue } from '../hooks/useDebouncedValue';
+import { ExportCsvButton } from '../components/ExportCsv';
 
 interface Unit { id: number; name: string }
 interface Household { id: number; code: string; headName: string; members: number; village?: Unit; createdAt: string }
@@ -20,6 +22,9 @@ export function Households() {
   const [form, setForm] = useState<any>({});
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search);
+  const [sort, setSort] = useState('');
 
   const [cells, setCells] = useState<Unit[]>([]);
   const [villages, setVillages] = useState<Unit[]>([]);
@@ -27,7 +32,10 @@ export function Households() {
   async function load() {
     setLoading(true);
     try {
-      const res = await api.get<Paginated<Household>>('/admin/households', { params: { page, limit: 15 } });
+      const params: any = { page, limit: 15 };
+      if (debouncedSearch) params.q = debouncedSearch;
+      if (sort) params.sort = sort;
+      const res = await api.get<Paginated<Household>>('/admin/households', { params });
       setItems(res.data.items);
       setPages(res.data.pagination.pages);
     } catch (e) {
@@ -36,7 +44,7 @@ export function Households() {
       setLoading(false);
     }
   }
-  useEffect(() => { void load(); }, [page]);
+  useEffect(() => { void load(); }, [page, debouncedSearch, sort]);
   useEffect(() => { if (level === 5) api.get('/catalog/scope-tree').then(() => {}).catch(() => {}); }, [level]);
 
   async function loadCells() {
@@ -74,8 +82,34 @@ export function Households() {
         title="Households"
         subtitle="Registered households in your jurisdiction"
         breadcrumb="Northern Province / Households"
-        actions={canCreate && <Button onClick={() => setShowNew(true)}><Plus size={16} /> Register household</Button>}
+        actions={canCreate && (
+          <div className="flex flex-wrap gap-2">
+            <ExportCsvButton path="/admin/households" filename="households" />
+            <Button onClick={() => setShowNew(true)}><Plus size={16} /> Register household</Button>
+          </div>
+        )}
       />
+
+      <Card className="mb-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <SearchInput
+            value={search}
+            onChange={(v) => { setSearch(v); setPage(1); }}
+            placeholder="Search by household code or head of household..."
+            className="w-full md:w-72"
+          />
+          <span className="ml-auto inline-flex items-center gap-2">
+            <span className="text-xs text-slate-400">Sort:</span>
+            <Select className="!w-40 shrink-0" value={sort} onChange={(e) => { setPage(1); setSort(e.target.value); }}>
+              <option value="">Newest</option>
+              <option value="oldest">Oldest</option>
+              <option value="name">Head name A-Z</option>
+              <option value="members">Most members</option>
+              <option value="code">By code</option>
+            </Select>
+          </span>
+        </div>
+      </Card>
 
       {loading ? <Spinner /> : items.length === 0 ? (
         <Card><EmptyState title="No households registered" /></Card>
@@ -102,7 +136,7 @@ export function Households() {
           <Field label="Head of household" required>
             <Input value={form.headName ?? ''} onChange={(e) => setForm({ ...form, headName: e.target.value })} required />
           </Field>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Members" required>
               <Input type="number" min={1} value={form.members ?? ''} onChange={(e) => setForm({ ...form, members: Number(e.target.value) })} required />
             </Field>
