@@ -1,4 +1,4 @@
-import { ReactNode, SelectHTMLAttributes, InputHTMLAttributes, TextareaHTMLAttributes, ButtonHTMLAttributes } from 'react';
+import { memo, type ReactNode, type SelectHTMLAttributes, type InputHTMLAttributes, type TextareaHTMLAttributes, type ButtonHTMLAttributes } from 'react';
 import { Loader2, Languages, Search, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import i18n, { LANG_KEY } from '../i18n';
@@ -105,6 +105,7 @@ export function Select({ className, children, ...rest }: SelectHTMLAttributes<HT
 export function SearchInput({ value, onChange, placeholder, className }: {
   value: string; onChange: (v: string) => void; placeholder?: string; className?: string;
 }) {
+  const { t } = useTranslation();
   return (
     <div className={cx('relative', className)}>
       <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
@@ -112,14 +113,14 @@ export function SearchInput({ value, onChange, placeholder, className }: {
         type="search"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder ?? 'Search...'}
+        placeholder={placeholder ?? t('commonui.search')}
         className="pl-9 pr-8"
       />
       {value && (
         <button
           type="button"
           onClick={() => onChange('')}
-          aria-label="Clear search"
+          aria-label={t('commonui.clearSearch')}
           className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
         >
           <X size={14} />
@@ -162,13 +163,13 @@ const badgeColors: Record<string, string> = {
   purple: 'bg-purple-50 text-purple-700 border-purple-200',
 };
 
-export function Badge({ children, color = 'slate' }: { children: ReactNode; color?: keyof typeof badgeColors | string }) {
+export const Badge = memo(function Badge({ children, color = 'slate' }: { children: ReactNode; color?: keyof typeof badgeColors | string }) {
   return (
     <span className={cx('inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium border', badgeColors[color] ?? badgeColors.slate)}>
       {children}
     </span>
   );
-}
+});
 
 export function statusColor(status: string): string {
   const s = status?.toUpperCase();
@@ -178,16 +179,17 @@ export function statusColor(status: string): string {
   if (['IN_PROGRESS', 'UNDER_REVIEW', 'ASSIGNED', 'SUBMITTED', 'PUBLISHED', 'RECEIVED', 'PENDING'].includes(s)) return 'amber';
   if (['MEDIUM'].includes(s)) return 'amber';
   if (['PLANNED', 'DRAFT', 'REVISION', 'LOW'].includes(s)) return 'slate';
+  if (['ARCHIVED'].includes(s)) return 'slate';
   return 'blue';
 }
 
-export function StatusBadge({ status }: { status: string }) {
+export const StatusBadge = memo(function StatusBadge({ status }: { status: string }) {
   const { t } = useTranslation();
   const s = (status ?? '').toUpperCase();
   const key = `status.${s}`;
   const label = t(key);
   return <Badge color={statusColor(s)}>{label === key ? s.replace(/_/g, ' ') : label}</Badge>;
-}
+});
 
 export function StatCard({ label, value, icon, accent = 'brand' }: { label: string; value: ReactNode; icon?: ReactNode; accent?: string }) {
   const accents: Record<string, string> = {
@@ -204,6 +206,72 @@ export function StatCard({ label, value, icon, accent = 'brand' }: { label: stri
         <div className="text-xl font-bold text-slate-800 leading-tight">{value}</div>
         <div className="text-xs text-slate-500 truncate">{label}</div>
       </div>
+    </div>
+  );
+}
+
+export function KpiCard({ label, value, icon, trend, trendNote }: {
+  label: string; value: ReactNode; icon?: ReactNode; trend?: ReactNode; trendNote?: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_1px_3px_rgba(15,23,42,0.06)] transition-shadow hover:shadow-[0_4px_16px_rgba(15,23,42,0.09)]">
+      <div className="flex items-center justify-between gap-2 mb-3">
+        {icon && <div className="h-11 w-11 rounded-xl bg-brand-50 text-brand-700 flex items-center justify-center">{icon}</div>}
+      </div>
+      <div className="text-3xl font-bold text-slate-900 tracking-tight leading-none">{value}</div>
+      <div className="mt-2 text-xs font-medium text-slate-500">{label}</div>
+      {(trend || trendNote) && (
+        <div className="mt-2 flex items-center gap-1.5 text-[11px]">
+          {trend}
+          {trendNote && <span className="text-slate-400">{trendNote}</span>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function TrendChip({ value, good }: { value: string; good?: boolean }) {
+  const up = value.startsWith('+');
+  const down = value.startsWith('-');
+  const neutral = !up && !down;
+  return (
+    <span
+      className={cx(
+        'inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[11px] font-semibold',
+        neutral ? 'bg-slate-100 text-slate-500' : good ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600',
+      )}
+    >
+      {up ? '▲' : down ? '▼' : '—'} {value.replace(/^[+-]/, '')}
+    </span>
+  );
+}
+
+export function ScoreGauge({ value, size = 132, stroke = 11, color = '#1a7bdb', label, sublabel }: {
+  value: number; size?: number; stroke?: number; color?: string; label?: string; sublabel?: string;
+}) {
+  const clamped = Math.min(100, Math.max(0, Math.round(value || 0)));
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const offset = c * (1 - clamped / 100);
+  const center = size / 2;
+  return (
+    <div className="flex flex-col items-center">
+      <div className="relative" style={{ width: size, height: size }}>
+        <svg width={size} height={size} className="-rotate-90">
+          <circle cx={center} cy={center} r={r} fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth={stroke} />
+          <circle
+            cx={center} cy={center} r={r} fill="none"
+            stroke={color} strokeWidth={stroke} strokeLinecap="round"
+            strokeDasharray={c} strokeDashoffset={offset}
+            style={{ transition: 'stroke-dashoffset 0.8s ease' }}
+          />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-3xl font-bold text-white leading-none">{clamped}%</span>
+          {label && <span className="mt-1 text-[10px] uppercase tracking-wide text-white/60">{label}</span>}
+        </div>
+      </div>
+      {sublabel && <div className="mt-2 text-[11px] text-white/70">{sublabel}</div>}
     </div>
   );
 }
@@ -228,7 +296,7 @@ export function Modal({ open, onClose, title, children, wide }: {
   );
 }
 
-export function Spinner({ label }: { label?: string }) {
+export const Spinner = memo(function Spinner({ label }: { label?: string }) {
   const { t } = useTranslation();
   return (
     <div className="flex items-center justify-center py-16 text-slate-400">
@@ -236,16 +304,16 @@ export function Spinner({ label }: { label?: string }) {
       <span className="text-sm">{label ?? t('common.loading')}</span>
     </div>
   );
-}
+});
 
-export function EmptyState({ title, children }: { title: string; children?: ReactNode }) {
+export const EmptyState = memo(function EmptyState({ title, children }: { title: string; children?: ReactNode }) {
   return (
     <div className="text-center py-12">
       <div className="text-sm font-medium text-slate-500">{title}</div>
       {children && <div className="text-xs text-slate-400 mt-1">{children}</div>}
     </div>
   );
-}
+});
 
 export function Pagination({ page, pages, onChange }: { page: number; pages: number; onChange: (p: number) => void }) {
   const { t } = useTranslation();

@@ -62,19 +62,19 @@ export function apiError(err: unknown): string {
 
 function translateApiError(message: string, status?: number): string {
   const t = (key: string) => i18n.t(`errors.${key}`);
-  if (/locked/i.test(message)) return t('accountLocked');
-  if (/pending approval/i.test(message)) return t('accountPending');
-  if (/inactive/i.test(message)) return t('accountInactive');
-  if (/disabled/i.test(message)) return t('accountDisabled');
-  if (/expired/i.test(message)) return t('accountExpired');
-  if (/too many requests/i.test(message)) return t('rateLimited');
-  if (/invalid|incorrect|credential|password|username/i.test(message)) return t('invalidCredentials');
-  if (/verification code|authenticator|two-factor/i.test(message)) return t('invalidTotp');
-  if (status === 403) return t('forbidden');
-  if (status === 404) return t('notFound');
-  if (status === 422) return t('validationFailed');
-  if (status === 401) return t('invalidCredentials');
-  return message || t('generic');
+  if (/locked/i.test(message)) return t('errors.accountLocked');
+  if (/pending approval/i.test(message)) return t('errors.accountPending');
+  if (/inactive/i.test(message)) return t('errors.accountInactive');
+  if (/disabled/i.test(message)) return t('errors.accountDisabled');
+  if (/expired/i.test(message)) return t('errors.accountExpired');
+  if (/too many requests/i.test(message)) return t('errors.rateLimited');
+  if (/invalid|incorrect|credential|password|username/i.test(message)) return t('errors.invalidCredentials');
+  if (/verification code|authenticator|two-factor/i.test(message)) return t('errors.invalidTotp');
+  if (status === 403) return t('errors.forbidden');
+  if (status === 404) return t('errors.notFound');
+  if (status === 422) return t('errors.validationFailed');
+  if (status === 401) return t('errors.invalidCredentials');
+  return message || t('errors.generic');
 }
 
 export function setAuth(accessToken: string, refreshToken: string, user: any) {

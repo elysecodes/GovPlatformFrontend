@@ -1,12 +1,14 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { api, apiError } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { Button, Card, Field, Modal, PageHeader, Select, Spinner, StatusBadge, Textarea, formatDate } from '../components/ui';
 import { ServiceRequest } from '../lib/types';
 
 export function RequestDetail() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -76,43 +78,43 @@ export function RequestDetail() {
     <div>
       <PageHeader
         title={request.title}
-        subtitle={`Ref ${request.requestNo} · Submitted ${formatDate(request.createdAt)}`}
-        breadcrumb={<button onClick={() => navigate('/requests')} className="inline-flex items-center gap-1 text-slate-400 hover:text-slate-600"><ArrowLeft size={13} /> Back to requests</button>}
+        subtitle={t('requestdetail.subtitle', { ref: request.requestNo, date: formatDate(request.createdAt) })}
+        breadcrumb={<button onClick={() => navigate('/requests')} className="inline-flex items-center gap-1 text-slate-400 hover:text-slate-600"><ArrowLeft size={13} /> {t('requestdetail.backToRequests')}</button>}
         actions={
           <div className="flex gap-2">
-            {canEscalate && <Button variant="secondary" onClick={() => setShowEscalate(true)}>Escalate</Button>}
-            {isAdmin && <Button onClick={() => setShowStatus(true)}>Update status</Button>}
+            {canEscalate && <Button variant="secondary" onClick={() => setShowEscalate(true)}>{t('requestdetail.escalate')}</Button>}
+            {isAdmin && <Button onClick={() => setShowStatus(true)}>{t('requestdetail.updateStatus')}</Button>}
           </div>
         }
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div className="lg:col-span-2">
-          <Card title="Details">
+          <Card title={t('requestdetail.details')}>
             <div className="space-y-3 text-sm">
-              <div className="flex justify-between gap-4"><span className="text-slate-500">Status</span><StatusBadge status={request.status} /></div>
-              <div className="flex justify-between gap-4"><span className="text-slate-500">Service type</span><span className="text-slate-800">{request.serviceType?.name}</span></div>
-              <div className="flex justify-between gap-4"><span className="text-slate-500">Location</span><span className="text-slate-800">{request.location ?? request.village?.name}</span></div>
-              <div className="flex justify-between gap-4"><span className="text-slate-500">Citizen</span><span className="text-slate-800">{request.citizen?.user?.fullName}</span></div>
-              <div className="flex justify-between gap-4"><span className="text-slate-500">Assigned officer</span><span className="text-slate-800">{request.assignedOfficer?.fullName ?? 'Not assigned'}</span></div>
+              <div className="flex justify-between gap-4"><span className="text-slate-500">{t('users.colStatus')}</span><StatusBadge status={request.status} /></div>
+              <div className="flex justify-between gap-4"><span className="text-slate-500">{t('requestdetail.serviceType')}</span><span className="text-slate-800">{request.serviceType?.name}</span></div>
+              <div className="flex justify-between gap-4"><span className="text-slate-500">{t('requestdetail.location')}</span><span className="text-slate-800">{request.location ?? request.village?.name}</span></div>
+              <div className="flex justify-between gap-4"><span className="text-slate-500">{t('requestdetail.citizen')}</span><span className="text-slate-800">{request.citizen?.user?.fullName}</span></div>
+              <div className="flex justify-between gap-4"><span className="text-slate-500">{t('requestdetail.assignedOfficer')}</span><span className="text-slate-800">{request.assignedOfficer?.fullName ?? t('requestdetail.notAssigned')}</span></div>
             </div>
             <div className="mt-4 pt-4 border-t border-slate-100">
-              <div className="text-xs uppercase text-slate-400 mb-1">Description</div>
+              <div className="text-xs uppercase text-slate-400 mb-1">{t('requestdetail.description')}</div>
               <p className="text-sm text-slate-700 whitespace-pre-wrap">{request.description}</p>
             </div>
             {request.resolution && (
               <div className="mt-4 pt-4 border-t border-slate-100">
-                <div className="text-xs uppercase text-slate-400 mb-1">Resolution</div>
+                <div className="text-xs uppercase text-slate-400 mb-1">{t('requestdetail.resolution')}</div>
                 <p className="text-sm text-emerald-700 whitespace-pre-wrap">{request.resolution}</p>
               </div>
             )}
           </Card>
 
           {request.escalations && request.escalations.length > 0 && (
-            <Card title="Escalation history" className="mt-5">
+            <Card title={t('requestdetail.escalationHistory')} className="mt-5">
               {(request as any).escalations.map((es: any) => (
                 <div key={es.id} className="py-2 border-b border-slate-50 last:border-0 text-sm">
-                  <div className="font-medium text-slate-700">Escalated from level {es.fromLevel} to {es.toLevel}</div>
+                  <div className="font-medium text-slate-700">{t('requestdetail.escalatedFrom', { from: es.fromLevel, to: es.toLevel })}</div>
                   <div className="text-xs text-slate-500 mt-0.5">{es.reason} · {formatDate(es.createdAt)}</div>
                 </div>
               ))}
@@ -122,48 +124,48 @@ export function RequestDetail() {
 
         <div className="space-y-5">
           {isAdmin && (
-            <Card title="Assignment">
+            <Card title={t('requestdetail.assignment')}>
               <div className="space-y-3">
                 <Select value={officerId} onChange={(e) => setOfficerId(e.target.value)}>
-                  <option value="">Select officer</option>
+                  <option value="">{t('requestdetail.selectOfficer')}</option>
                   {officers.map((o) => <option key={o.id} value={o.id}>{o.fullName} — {o.roleName}</option>)}
                 </Select>
-                <Button onClick={doAssign} className="w-full justify-center">Assign officer</Button>
+                <Button onClick={doAssign} className="w-full justify-center">{t('requestdetail.assignOfficer')}</Button>
               </div>
             </Card>
           )}
         </div>
       </div>
 
-      <Modal open={showEscalate} onClose={() => setShowEscalate(false)} title="Escalate request">
+      <Modal open={showEscalate} onClose={() => setShowEscalate(false)} title={t('requestdetail.escalateModalTitle')}>
         <form onSubmit={doEscalate} className="space-y-4">
-          <Field label="Reason for escalation" required>
+          <Field label={t('requestdetail.escalationReason')} required>
             <Textarea rows={4} value={escalateReason} onChange={(e) => setEscalateReason(e.target.value)} required />
           </Field>
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" onClick={() => setShowEscalate(false)}>Cancel</Button>
-            <Button type="submit">Escalate</Button>
+            <Button type="button" variant="secondary" onClick={() => setShowEscalate(false)}>{t('common.cancel')}</Button>
+            <Button type="submit">{t('requestdetail.escalate')}</Button>
           </div>
         </form>
       </Modal>
 
-      <Modal open={showStatus} onClose={() => setShowStatus(false)} title="Update status">
+      <Modal open={showStatus} onClose={() => setShowStatus(false)} title={t('requestdetail.updateStatus')}>
         <form onSubmit={doStatus} className="space-y-4">
-          <Field label="Status" required>
+          <Field label={t('users.colStatus')} required>
             <Select value={statusForm.status} onChange={(e) => setStatusForm({ ...statusForm, status: e.target.value })}>
               {['SUBMITTED', 'RECEIVED', 'UNDER_REVIEW', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'].map((s) => (
-                <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
+                <option key={s} value={s}>{t(`status.${s}`)}</option>
               ))}
             </Select>
           </Field>
           {['RESOLVED', 'CLOSED'].includes(statusForm.status) && (
-            <Field label="Resolution" required>
+            <Field label={t('requestdetail.resolution')} required>
               <Textarea rows={3} value={statusForm.resolution} onChange={(e) => setStatusForm({ ...statusForm, resolution: e.target.value })} required />
             </Field>
           )}
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" onClick={() => setShowStatus(false)}>Cancel</Button>
-            <Button type="submit">Save</Button>
+            <Button type="button" variant="secondary" onClick={() => setShowStatus(false)}>{t('common.cancel')}</Button>
+            <Button type="submit">{t('common.save')}</Button>
           </div>
         </form>
       </Modal>

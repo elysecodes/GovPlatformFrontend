@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { api, apiError } from '../lib/api';
@@ -11,6 +12,7 @@ import { ExportCsvButton } from '../components/ExportCsv';
 interface Unit { id: number; name: string }
 
 export function Complaints() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const isCitizen = user?.level === 6;
   const navigate = useNavigate();
@@ -81,79 +83,79 @@ export function Complaints() {
   return (
     <div>
       <PageHeader
-        title="Complaints"
-        subtitle={`${total} records`}
-        breadcrumb="Northern Province / Complaints"
+        title={t('nav.complaints')}
+        subtitle={t('complaints.recordCount', { total })}
+        breadcrumb={`${t('common.appName')} / ${t('nav.complaints')}`}
         actions={
           <div className="flex flex-wrap gap-2">
             <ExportCsvButton path="/complaints" filename="complaints" />
             <Button onClick={() => navigate('/complaints/new')}>
-              <Plus size={16} /> New complaint
+              <Plus size={16} /> {t('complaints.new')}
             </Button>
           </div>
         }
       />
 
       {showNew && (
-        <Modal open onClose={() => navigate('/complaints')} title="Submit a complaint" wide>
+        <Modal open onClose={() => navigate('/complaints')} title={t('complaints.submitTitle')} wide>
           {error && <div className="mb-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2">{error}</div>}
           <form onSubmit={onSubmit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Field label="Category" required>
+              <Field label={t('complaints.category')} required>
                 <Select value={form.categoryId ?? ''} onChange={(e) => setForm({ ...form, categoryId: Number(e.target.value) })} required>
-                  <option value="">Select category</option>
+                  <option value="">{t('complaints.selectCategory')}</option>
                   {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </Select>
               </Field>
-              <Field label="Priority" required>
+              <Field label={t('complaints.priority')} required>
                 <Select value={form.priority ?? 'MEDIUM'} onChange={(e) => setForm({ ...form, priority: e.target.value })}>
-                  <option value="LOW">Low</option>
-                  <option value="MEDIUM">Medium</option>
-                  <option value="HIGH">High</option>
-                  <option value="URGENT">Urgent</option>
+                  <option value="LOW">{t('status.LOW')}</option>
+                  <option value="MEDIUM">{t('status.MEDIUM')}</option>
+                  <option value="HIGH">{t('status.HIGH')}</option>
+                  <option value="URGENT">{t('status.URGENT')}</option>
                 </Select>
               </Field>
             </div>
-            <Field label="Title" required>
-              <Input value={form.title ?? ''} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Short summary of the issue" required />
+            <Field label={t('complaints.title')} required>
+              <Input value={form.title ?? ''} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder={t('complaints.titlePlaceholder')} required />
             </Field>
-            <Field label="Description" required>
-              <Textarea rows={4} value={form.description ?? ''} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Describe the issue in detail" required />
+            <Field label={t('complaints.description')} required>
+              <Textarea rows={4} value={form.description ?? ''} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder={t('complaints.descriptionPlaceholder')} required />
             </Field>
-            <Field label="Location">
-              <Input value={form.location ?? ''} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="Landmark, street or area" />
+            <Field label={t('complaints.location')}>
+              <Input value={form.location ?? ''} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder={t('complaints.locationPlaceholder')} />
             </Field>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-100">
-              <Field label="District" required>
+              <Field label={t('register.district')} required>
                 <Select value={form.districtId ?? ''} onChange={(e) => { loadSectors(Number(e.target.value)); setForm({ ...form, districtId: Number(e.target.value), sectorId: undefined, cellId: undefined, villageId: undefined }); setSectors([]); setCells([]); setVillages([]); }} required>
-                  <option value="">Select</option>
+                  <option value="">{t('register.select')}</option>
                   {districts.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </Select>
               </Field>
-              <Field label="Sector" required>
+              <Field label={t('register.sector')} required>
                 <Select value={form.sectorId ?? ''} disabled={!sectors.length} onChange={(e) => { loadCells(Number(e.target.value)); setForm({ ...form, sectorId: Number(e.target.value), cellId: undefined, villageId: undefined }); setCells([]); setVillages([]); }}>
-                  <option value="">Select</option>
+                  <option value="">{t('register.select')}</option>
                   {sectors.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </Select>
               </Field>
-              <Field label="Cell" required>
+              <Field label={t('register.cell')} required>
                 <Select value={form.cellId ?? ''} disabled={!cells.length} onChange={(e) => { loadVillages(Number(e.target.value)); setForm({ ...form, cellId: Number(e.target.value), villageId: undefined }); setVillages([]); }}>
-                  <option value="">Select</option>
+                  <option value="">{t('register.select')}</option>
                   {cells.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </Select>
               </Field>
-              <Field label="Village" required>
+              <Field label={t('register.village')} required>
                 <Select value={form.villageId ?? ''} disabled={!villages.length} onChange={(e) => setForm({ ...form, villageId: Number(e.target.value) })}>
-                  <option value="">Select</option>
+                  <option value="">{t('register.select')}</option>
                   {villages.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
                 </Select>
               </Field>
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="secondary" onClick={() => navigate('/complaints')}>Cancel</Button>
-              <Button type="submit" loading={saving}>Submit complaint</Button>
+              <Button type="button" variant="secondary" onClick={() => navigate('/complaints')}>{t('common.cancel')}</Button>
+              <Button type="submit" loading={saving}>{t('complaints.submit')}</Button>
             </div>
           </form>
         </Modal>
@@ -164,37 +166,37 @@ export function Complaints() {
           <SearchInput
             value={search}
             onChange={(v) => { setSearch(v); setPage(1); }}
-            placeholder="Search by title or reference..."
+            placeholder={t('complaints.searchPlaceholder')}
             className="w-full md:w-72"
           />
           <Select className="!w-48 shrink-0" value={categoryId} onChange={(e) => { setPage(1); setCategoryId(e.target.value); }}>
-            <option value="">All categories</option>
+            <option value="">{t('complaints.allCategories')}</option>
             {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </Select>
           <Select className="!w-48 shrink-0" value={status} onChange={(e) => { setPage(1); setStatus(e.target.value); }}>
-            <option value="">All statuses</option>
+            <option value="">{t('complaints.allStatuses')}</option>
             {['SUBMITTED', 'RECEIVED', 'UNDER_REVIEW', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'CLOSED', 'ESCALATED'].map((s) => (
-              <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
+              <option key={s} value={s}>{t(`status.${s}`)}</option>
             ))}
           </Select>
-          <span className="text-xs text-slate-400">{isCitizen ? 'Your complaints' : 'Complaints within your jurisdiction'}</span>
+          <span className="text-xs text-slate-400">{isCitizen ? t('complaints.yourComplaints') : t('complaints.withinJurisdiction')}</span>
           <span className="ml-auto inline-flex items-center gap-2">
-            <span className="text-xs text-slate-400">Sort:</span>
+            <span className="text-xs text-slate-400">{t('complaints.sort')}</span>
             <Select className="!w-40 shrink-0" value={sort} onChange={(e) => { setPage(1); setSort(e.target.value); }}>
-              <option value="">Newest</option>
-              <option value="oldest">Oldest</option>
-              <option value="status">By status</option>
-              <option value="priority">By priority</option>
+              <option value="">{t('complaints.sortNewest')}</option>
+              <option value="oldest">{t('complaints.sortOldest')}</option>
+              <option value="status">{t('complaints.sortByStatus')}</option>
+              <option value="priority">{t('complaints.sortByPriority')}</option>
             </Select>
           </span>
         </div>
       </Card>
 
       {loading ? <Spinner /> : items.length === 0 ? (
-        <Card><EmptyState title="No complaints found" /></Card>
+        <Card><EmptyState title={t('complaints.empty')} /></Card>
       ) : (
         <Card className="p-0">
-          <Table headers={['No', 'Title', 'Category', 'Location', 'Status', 'Priority', 'Date']}>
+          <Table headers={[t('complaints.colNo'), t('complaints.title'), t('complaints.category'), t('complaints.location'), t('users.colStatus'), t('complaints.priority'), t('complaints.colDate')]}>
             {items.map((c) => (
               <tr key={c.id} className="hover:bg-slate-50 cursor-pointer" onClick={() => navigate(`/complaints/${c.id}`)}>
                 <td className="py-3 pr-4 font-mono text-xs text-slate-500">{c.complaintNo}</td>

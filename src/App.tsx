@@ -1,31 +1,42 @@
+import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './lib/auth';
 import { Layout } from './components/Layout';
 import { Login } from './pages/Login';
-import { Register } from './pages/Register';
-import { ForgotPassword } from './pages/ForgotPassword';
-import { ResetPassword } from './pages/ResetPassword';
-import { Dashboard } from './pages/Dashboard';
-import { Complaints } from './pages/Complaints';
-import { ComplaintDetail } from './pages/ComplaintDetail';
-import { Requests } from './pages/Requests';
-import { RequestDetail } from './pages/RequestDetail';
-import { Reports } from './pages/Reports';
-import { ReportDetail } from './pages/ReportDetail';
-import { Announcements } from './pages/Announcements';
-import { Projects } from './pages/Projects';
-import { ProjectDetail } from './pages/ProjectDetail';
-import { Events } from './pages/Events';
-import { Notifications } from './pages/Notifications';
-import { Users } from './pages/Users';
-import { Households } from './pages/Households';
-import { Citizens } from './pages/Citizens';
-import { Tasks } from './pages/Tasks';
-import { Meetings } from './pages/Meetings';
-import { Cooperatives } from './pages/Cooperatives';
-import { AuditLogs } from './pages/AuditLogs';
-import { Profile } from './pages/Profile';
-import { ChangePassword } from './pages/ChangePassword';
+
+const Register = lazy(() => import('./pages/Register').then((m) => ({ default: m.Register })));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword').then((m) => ({ default: m.ForgotPassword })));
+const ResetPassword = lazy(() => import('./pages/ResetPassword').then((m) => ({ default: m.ResetPassword })));
+const ChangePassword = lazy(() => import('./pages/ChangePassword').then((m) => ({ default: m.ChangePassword })));
+const Dashboard = lazy(() => import('./pages/Dashboard').then((m) => ({ default: m.Dashboard })));
+const Complaints = lazy(() => import('./pages/Complaints').then((m) => ({ default: m.Complaints })));
+const ComplaintDetail = lazy(() => import('./pages/ComplaintDetail').then((m) => ({ default: m.ComplaintDetail })));
+const Requests = lazy(() => import('./pages/Requests').then((m) => ({ default: m.Requests })));
+const RequestDetail = lazy(() => import('./pages/RequestDetail').then((m) => ({ default: m.RequestDetail })));
+const Reports = lazy(() => import('./pages/Reports').then((m) => ({ default: m.Reports })));
+const ReportDetail = lazy(() => import('./pages/ReportDetail').then((m) => ({ default: m.ReportDetail })));
+const Announcements = lazy(() => import('./pages/Announcements').then((m) => ({ default: m.Announcements })));
+const Projects = lazy(() => import('./pages/Projects').then((m) => ({ default: m.Projects })));
+const ProjectDetail = lazy(() => import('./pages/ProjectDetail').then((m) => ({ default: m.ProjectDetail })));
+const Events = lazy(() => import('./pages/Events').then((m) => ({ default: m.Events })));
+const Agenda = lazy(() => import('./pages/Agenda').then((m) => ({ default: m.Agenda })));
+const Notifications = lazy(() => import('./pages/Notifications').then((m) => ({ default: m.Notifications })));
+const Users = lazy(() => import('./pages/Users').then((m) => ({ default: m.Users })));
+const Households = lazy(() => import('./pages/Households').then((m) => ({ default: m.Households })));
+const Citizens = lazy(() => import('./pages/Citizens').then((m) => ({ default: m.Citizens })));
+const Tasks = lazy(() => import('./pages/Tasks').then((m) => ({ default: m.Tasks })));
+const Meetings = lazy(() => import('./pages/Meetings').then((m) => ({ default: m.Meetings })));
+const Cooperatives = lazy(() => import('./pages/Cooperatives').then((m) => ({ default: m.Cooperatives })));
+const AuditLogs = lazy(() => import('./pages/AuditLogs').then((m) => ({ default: m.AuditLogs })));
+const Profile = lazy(() => import('./pages/Profile').then((m) => ({ default: m.Profile })));
+
+function Spinner() {
+  return (
+    <div className="flex items-center justify-center py-24">
+      <div className="h-8 w-8 rounded-full border-2 border-brand-600 border-t-transparent animate-spin" />
+    </div>
+  );
+}
 
 function Protected({ children }: { children: JSX.Element }) {
   const { user } = useAuth();
@@ -52,7 +63,8 @@ const ADMIN_ROLES = ['SUPER_ADMIN', 'PROVINCE_ADMIN', 'DISTRICT_ADMIN', 'SECTOR_
 
 function App() {
   return (
-    <Routes>
+    <Suspense fallback={<Spinner />}>
+      <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -78,6 +90,7 @@ function App() {
                 <Route path="/projects" element={<Projects />} />
                 <Route path="/projects/:id" element={<ProjectDetail />} />
                 <Route path="/events" element={<Events />} />
+                <Route path="/agenda" element={<Agenda />} />
                 <Route path="/notifications" element={<Notifications />} />
                 <Route path="/users" element={<RequireRole roles={['SUPER_ADMIN', 'PROVINCE_ADMIN', 'DISTRICT_ADMIN', 'SECTOR_ADMIN', 'CELL_ADMIN']}><Users /></RequireRole>} />
                 <Route path="/households" element={<RequireRole roles={['SUPER_ADMIN', 'PROVINCE_ADMIN', 'DISTRICT_ADMIN', 'SECTOR_ADMIN', 'CELL_ADMIN', 'VILLAGE_ADMIN']}><Households /></RequireRole>} />
@@ -94,6 +107,7 @@ function App() {
         }
       />
     </Routes>
+    </Suspense>
   );
 }
 

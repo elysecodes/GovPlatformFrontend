@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { Plus, Pencil, KeyRound, Ban, CheckCircle2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { api, apiError } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { Button, Card, EmptyState, Field, Input, Modal, PageHeader, Pagination, SearchInput, Select, Spinner, StatusBadge, Table, formatDate } from '../components/ui';
@@ -21,6 +22,7 @@ interface Citizen {
 
 export function Citizens() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const level = user?.level ?? 6;
   const isAdmin = level < 6;
 
@@ -183,13 +185,13 @@ export function Citizens() {
   return (
     <div>
       <PageHeader
-        title="Registered Citizens"
-        subtitle="Citizens within your jurisdiction"
-        breadcrumb="Northern Province / Citizens"
+        title={t('citizens.title')}
+        subtitle={t('citizens.subtitle')}
+        breadcrumb={t('citizens.breadcrumb', { app: t('common.appName'), page: t('nav.citizens') })}
         actions={isAdmin && (
           <div className="flex flex-wrap gap-2">
             <ExportCsvButton path="/citizens" filename="citizens" />
-            <Button onClick={() => { resetLocation(); setCreateOpen(true); }}><Plus size={16} /> New citizen</Button>
+            <Button onClick={() => { resetLocation(); setCreateOpen(true); }}><Plus size={16} /> {t('citizens.newCitizen')}</Button>
           </div>
         )}
       />
@@ -199,16 +201,16 @@ export function Citizens() {
           <SearchInput
             value={search}
             onChange={(v) => { setSearch(v); setPage(1); }}
-            placeholder="Search by name, username or national ID..."
+            placeholder={t('citizens.searchPlaceholder')}
             className="w-full md:w-72"
           />
           <span className="ml-auto inline-flex items-center gap-2">
-            <span className="text-xs text-slate-400">Sort:</span>
+            <span className="text-xs text-slate-400">{t('citizens.sort')}</span>
             <Select className="!w-40 shrink-0" value={sort} onChange={(e) => { setPage(1); setSort(e.target.value); }}>
-              <option value="">Newest</option>
-              <option value="oldest">Oldest</option>
-              <option value="name">Name A-Z</option>
-              <option value="status">By status</option>
+              <option value="">{t('citizens.sortNewest')}</option>
+              <option value="oldest">{t('citizens.sortOldest')}</option>
+              <option value="name">{t('citizens.sortName')}</option>
+              <option value="status">{t('citizens.sortStatus')}</option>
             </Select>
           </span>
         </div>
@@ -217,16 +219,16 @@ export function Citizens() {
       {error && <div className="mb-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2">{error}</div>}
 
       {loading ? <Spinner /> : items.length === 0 ? (
-        <Card><EmptyState title="No registered citizens" /></Card>
+        <Card><EmptyState title={t('citizens.noCitizens')} /></Card>
       ) : (
         <Card className="p-0">
-          <Table headers={['Name', 'Username', 'National ID', 'Gender', 'Village', 'Phone', 'Status', 'Registered', '']}>
+          <Table headers={[t('users.colName'), t('users.colUsername'), t('citizens.colNationalId'), t('citizens.colGender'), t('citizens.colVillage'), t('citizens.colPhone'), t('users.colStatus'), t('citizens.colRegistered'), '']}>
             {items.map((c) => (
               <tr key={c.id}>
                 <td className="py-3 pr-4 font-medium text-slate-800">{c.user?.fullName}</td>
                 <td className="py-3 pr-4 font-mono text-xs text-slate-500">{c.user?.username}</td>
                 <td className="py-3 pr-4 font-mono text-xs text-slate-500">{c.nationalId ?? '—'}</td>
-                <td className="py-3 pr-4 text-slate-600">{c.gender ?? '—'}</td>
+                <td className="py-3 pr-4 text-slate-600">{c.gender ? t('gender.' + c.gender, { defaultValue: c.gender }) : '—'}</td>
                 <td className="py-3 pr-4 text-slate-600">{c.village?.name}</td>
                 <td className="py-3 pr-4 text-slate-600">{c.user?.phone ?? '—'}</td>
                 <td className="py-3 pr-4"><StatusBadge status={c.user?.status ?? 'ACTIVE'} /></td>
@@ -234,19 +236,19 @@ export function Citizens() {
                 <td className="py-3 pr-4">
                   {isAdmin && (
                     <div className="flex items-center gap-1">
-                      <button type="button" onClick={() => openEdit(c)} title="Edit credentials" className="inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-medium text-brand-700 hover:bg-brand-50">
-                        <Pencil size={12} className="mr-0.5" /> Edit
+                      <button type="button" onClick={() => openEdit(c)} title={t('citizens.editCredentials')} className="inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-medium text-brand-700 hover:bg-brand-50">
+                        <Pencil size={12} className="mr-0.5" /> {t('common.edit')}
                       </button>
-                      <button type="button" onClick={() => { setForm({}); setPwdTarget(c); }} title="Reset password" className="inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-medium text-slate-600 hover:bg-slate-100">
-                        <KeyRound size={12} className="mr-0.5" /> Reset
+                      <button type="button" onClick={() => { setForm({}); setPwdTarget(c); }} title={t('citizens.resetPassword')} className="inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-medium text-slate-600 hover:bg-slate-100">
+                        <KeyRound size={12} className="mr-0.5" /> {t('citizens.reset')}
                       </button>
                       {c.user?.status === 'ACTIVE' ? (
-                        <button type="button" onClick={() => setDelTarget(c)} title="Deactivate" className="inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-medium text-red-600 hover:bg-red-50">
-                          <Ban size={12} className="mr-0.5" /> Deactivate
+                        <button type="button" onClick={() => setDelTarget(c)} title={t('users.deactivate')} className="inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-medium text-red-600 hover:bg-red-50">
+                          <Ban size={12} className="mr-0.5" /> {t('users.deactivate')}
                         </button>
                       ) : (
-                        <button type="button" onClick={() => submitActivate(c)} title="Activate" className="inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-medium text-emerald-700 hover:bg-emerald-50">
-                          <CheckCircle2 size={12} className="mr-0.5" /> Activate
+                        <button type="button" onClick={() => submitActivate(c)} title={t('users.activate')} className="inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-medium text-emerald-700 hover:bg-emerald-50">
+                          <CheckCircle2 size={12} className="mr-0.5" /> {t('users.activate')}
                         </button>
                       )}
                     </div>
@@ -259,36 +261,36 @@ export function Citizens() {
         </Card>
       )}
 
-      <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="New citizen account" wide>
+      <Modal open={createOpen} onClose={() => setCreateOpen(false)} title={t('citizens.createModalTitle')} wide>
         <form onSubmit={submitCreate} className="space-y-4">
           {error && <div className="rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2">{error}</div>}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Field label="Full name" required>
+            <Field label={t('users.fullName')} required>
               <Input value={form.fullName ?? ''} onChange={(e) => setForm({ ...form, fullName: e.target.value })} required />
             </Field>
-            <Field label="Username" required hint="Letters, numbers, _ .">
+            <Field label={t('users.username')} required hint={t('citizens.usernameHint')}>
               <Input value={form.username ?? ''} onChange={(e) => setForm({ ...form, username: e.target.value })} required />
             </Field>
-            <Field label="Email">
+            <Field label={t('users.email')}>
               <Input type="email" value={form.email ?? ''} onChange={(e) => setForm({ ...form, email: e.target.value })} />
             </Field>
-            <Field label="Phone">
+            <Field label={t('users.phone')}>
               <Input value={form.phone ?? ''} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
             </Field>
-            <Field label="National ID">
+            <Field label={t('citizens.nationalId')}>
               <Input value={form.nationalId ?? ''} onChange={(e) => setForm({ ...form, nationalId: e.target.value })} />
             </Field>
-            <Field label="Gender">
+            <Field label={t('citizens.gender')}>
               <Select value={form.gender ?? ''} onChange={(e) => setForm({ ...form, gender: e.target.value })}>
-                <option value="">Select</option>
-                <option>Male</option>
-                <option>Female</option>
+                <option value="">{t('users.select')}</option>
+                <option>{t('gender.Male')}</option>
+                <option>{t('gender.Female')}</option>
               </Select>
             </Field>
-            <Field label="Date of birth">
+            <Field label={t('citizens.dateOfBirth')}>
               <Input type="date" value={form.dateOfBirth ?? ''} onChange={(e) => setForm({ ...form, dateOfBirth: e.target.value })} />
             </Field>
-            <Field label="Temporary password" required hint="At least 8 characters. Citizen changes it on first login.">
+            <Field label={t('users.tempPassword')} required hint={t('citizens.tempPasswordHint')}>
               <Input type="password" value={form.password ?? ''} onChange={(e) => setForm({ ...form, password: e.target.value })} required />
             </Field>
           </div>
@@ -296,39 +298,39 @@ export function Citizens() {
           {locationVisible && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-100">
               {level >= 5 ? (
-                <Field label="Village" required>
+                <Field label={t('users.village')} required>
                   <Input value={fixedVillage?.name ?? ''} disabled />
                 </Field>
               ) : level === 4 ? (
-                <Field label="Village" required>
+                <Field label={t('users.village')} required>
                   <Select value={form.villageId ?? ''} onChange={(e) => setForm({ ...form, villageId: Number(e.target.value) })} required>
-                    <option value="">Select village</option>
+                    <option value="">{t('citizens.selectVillage')}</option>
                     {villages.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
                   </Select>
                 </Field>
               ) : (
                 <>
-                  <Field label="District" required>
+                  <Field label={t('users.district')} required>
                     <Select value={form.districtId ?? ''} onChange={(e) => { loadSectors(Number(e.target.value)); setForm({ ...form, districtId: Number(e.target.value), sectorId: undefined, cellId: undefined, villageId: undefined }); setSectors([]); setCells([]); setVillages([]); }} required>
-                      <option value="">Select</option>
+                      <option value="">{t('users.select')}</option>
                       {districts.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
                     </Select>
                   </Field>
-                  <Field label="Sector" required>
+                  <Field label={t('users.sector')} required>
                     <Select value={form.sectorId ?? ''} disabled={!sectors.length} onChange={(e) => { loadCells(Number(e.target.value)); setForm({ ...form, sectorId: Number(e.target.value), cellId: undefined, villageId: undefined }); setCells([]); setVillages([]); }}>
-                      <option value="">Select</option>
+                      <option value="">{t('users.select')}</option>
                       {sectors.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                     </Select>
                   </Field>
-                  <Field label="Cell" required>
+                  <Field label={t('users.cell')} required>
                     <Select value={form.cellId ?? ''} disabled={!cells.length} onChange={(e) => { loadVillages(Number(e.target.value)); setForm({ ...form, cellId: Number(e.target.value), villageId: undefined }); setVillages([]); }}>
-                      <option value="">Select</option>
+                      <option value="">{t('users.select')}</option>
                       {cells.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </Select>
                   </Field>
-                  <Field label="Village" required>
+                  <Field label={t('users.village')} required>
                     <Select value={form.villageId ?? ''} disabled={!villages.length} onChange={(e) => setForm({ ...form, villageId: Number(e.target.value) })}>
-                      <option value="">Select</option>
+                      <option value="">{t('users.select')}</option>
                       {villages.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
                     </Select>
                   </Field>
@@ -338,91 +340,91 @@ export function Citizens() {
           )}
 
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" onClick={() => setCreateOpen(false)}>Cancel</Button>
-            <Button type="submit" loading={saving}>Create account</Button>
+            <Button type="button" variant="secondary" onClick={() => setCreateOpen(false)}>{t('common.cancel')}</Button>
+            <Button type="submit" loading={saving}>{t('users.createAccount')}</Button>
           </div>
         </form>
       </Modal>
 
-      <Modal open={!!editTarget} onClose={() => setEditTarget(null)} title={`Edit citizen — ${editTarget?.user?.fullName ?? ''}`} wide>
+      <Modal open={!!editTarget} onClose={() => setEditTarget(null)} title={t('citizens.editTitle', { name: editTarget?.user?.fullName ?? '' })} wide>
         <form onSubmit={submitEdit} className="space-y-4">
           {error && <div className="rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2">{error}</div>}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Field label="Full name" required>
+            <Field label={t('users.fullName')} required>
               <Input value={form.fullName ?? ''} onChange={(e) => setForm({ ...form, fullName: e.target.value })} required />
             </Field>
-            <Field label="Username">
+            <Field label={t('users.username')}>
               <Input value={editTarget?.user?.username ?? ''} disabled />
             </Field>
-            <Field label="Email">
+            <Field label={t('users.email')}>
               <Input type="email" value={form.email ?? ''} onChange={(e) => setForm({ ...form, email: e.target.value })} />
             </Field>
-            <Field label="Phone">
+            <Field label={t('users.phone')}>
               <Input value={form.phone ?? ''} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
             </Field>
-            <Field label="National ID">
+            <Field label={t('citizens.nationalId')}>
               <Input value={form.nationalId ?? ''} onChange={(e) => setForm({ ...form, nationalId: e.target.value })} />
             </Field>
-            <Field label="Gender">
+            <Field label={t('citizens.gender')}>
               <Select value={form.gender ?? ''} onChange={(e) => setForm({ ...form, gender: e.target.value })}>
-                <option value="">Select</option>
-                <option>Male</option>
-                <option>Female</option>
+                <option value="">{t('users.select')}</option>
+                <option>{t('gender.Male')}</option>
+                <option>{t('gender.Female')}</option>
               </Select>
             </Field>
-            <Field label="Date of birth">
+            <Field label={t('citizens.dateOfBirth')}>
               <Input type="date" value={form.dateOfBirth ?? ''} onChange={(e) => setForm({ ...form, dateOfBirth: e.target.value })} />
             </Field>
           </div>
 
           {level >= 5 ? (
-            <Field label="Village">
+            <Field label={t('users.village')}>
               <Input value={editTarget?.village?.name ?? ''} disabled />
             </Field>
           ) : level === 4 ? (
-            <Field label="Village">
+            <Field label={t('users.village')}>
               <Select value={form.villageId ?? ''} onChange={(e) => setForm({ ...form, villageId: Number(e.target.value) })}>
-                <option value="">Select village</option>
+                <option value="">{t('citizens.selectVillage')}</option>
                 {villages.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
               </Select>
             </Field>
           ) : (
-            <Field label="Village">
+            <Field label={t('users.village')}>
               <Input value={editTarget?.village?.name ?? '—'} disabled />
             </Field>
           )}
 
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" onClick={() => setEditTarget(null)}>Cancel</Button>
-            <Button type="submit" loading={saving}>Save changes</Button>
+            <Button type="button" variant="secondary" onClick={() => setEditTarget(null)}>{t('common.cancel')}</Button>
+            <Button type="submit" loading={saving}>{t('citizens.saveChanges')}</Button>
           </div>
         </form>
       </Modal>
 
-      <Modal open={!!pwdTarget} onClose={() => setPwdTarget(null)} title={`Reset password — ${pwdTarget?.user?.fullName ?? ''}`}>
+      <Modal open={!!pwdTarget} onClose={() => setPwdTarget(null)} title={t('citizens.resetTitle', { name: pwdTarget?.user?.fullName ?? '' })}>
         <form onSubmit={submitPassword} className="space-y-4">
           {error && <div className="rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2">{error}</div>}
-          <p className="text-sm text-slate-500">Set a new temporary password. The citizen must change it on their next login.</p>
-          <Field label="New temporary password" required hint="At least 8 characters">
+          <p className="text-sm text-slate-500">{t('citizens.resetPasswordNotice')}</p>
+          <Field label={t('citizens.newTempPassword')} required hint={t('users.passwordHint')}>
             <Input type="password" value={form.password ?? ''} onChange={(e) => setForm({ ...form, password: e.target.value })} required autoFocus />
           </Field>
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" onClick={() => setPwdTarget(null)}>Cancel</Button>
-            <Button type="submit" loading={saving}>Reset password</Button>
+            <Button type="button" variant="secondary" onClick={() => setPwdTarget(null)}>{t('common.cancel')}</Button>
+            <Button type="submit" loading={saving}>{t('citizens.resetPassword')}</Button>
           </div>
         </form>
       </Modal>
 
-      <Modal open={!!delTarget} onClose={() => setDelTarget(null)} title={`Deactivate citizen — ${delTarget?.user?.fullName ?? ''}`}>
+      <Modal open={!!delTarget} onClose={() => setDelTarget(null)} title={t('citizens.deactivateTitle', { name: delTarget?.user?.fullName ?? '' })}>
         <div className="space-y-4">
           {error && <div className="rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2">{error}</div>}
           <div className="flex items-center gap-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2">
             <Ban size={16} />
-            <span>This will disable the citizen's account. Their records and history are preserved.</span>
+            <span>{t('citizens.deactivateWarning')}</span>
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="secondary" onClick={() => setDelTarget(null)}>Cancel</Button>
-            <Button variant="danger" onClick={submitDeactivate} loading={saving}>Deactivate account</Button>
+            <Button variant="secondary" onClick={() => setDelTarget(null)}>{t('common.cancel')}</Button>
+            <Button variant="danger" onClick={submitDeactivate} loading={saving}>{t('citizens.deactivateAccount')}</Button>
           </div>
         </div>
       </Modal>

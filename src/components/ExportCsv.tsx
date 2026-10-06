@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Download } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { api } from '../lib/api';
 import { Button } from './ui';
 
 /** Downloads the full data of a list endpoint as CSV (?export=csv). */
 export function ExportCsvButton({ path, filename = 'export' }: { path: string; filename?: string }) {
+  const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
 
   async function download() {
@@ -26,7 +28,7 @@ export function ExportCsvButton({ path, filename = 'export' }: { path: string; f
 
   return (
     <Button variant="secondary" onClick={() => void download()} loading={busy}>
-      <Download size={15} /> CSV
+      <Download size={15} /> {t('commonui.exportCsv')}
     </Button>
   );
 }

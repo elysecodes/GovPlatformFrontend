@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Plus } from 'lucide-react';
 import { api, apiError } from '../lib/api';
 import { useAuth } from '../lib/auth';
@@ -9,6 +10,7 @@ import { Paginated, Project } from '../lib/types';
 interface Unit { id: number; name: string }
 
 export function Projects() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const isAdmin = (user?.level ?? 6) < 6;
   const navigate = useNavigate();
@@ -65,26 +67,26 @@ export function Projects() {
   return (
     <div>
       <PageHeader
-        title="Development Projects"
-        subtitle="Infrastructure and community development initiatives"
-        breadcrumb="Northern Province / Projects"
-        actions={isAdmin && <Button onClick={() => setShowNew(true)}><Plus size={16} /> New project</Button>}
+        title={t('nav.projects')}
+        subtitle={t('projects.subtitle')}
+        breadcrumb={`${t('common.appName')} / ${t('nav.projects')}`}
+        actions={isAdmin && <Button onClick={() => setShowNew(true)}><Plus size={16} /> {t('projects.newProject')}</Button>}
       />
 
       <Card className="mb-4">
         <Select className="w-48" value={status} onChange={(e) => { setPage(1); setStatus(e.target.value); }}>
-          <option value="">All statuses</option>
+          <option value="">{t('projects.allStatuses')}</option>
           {['PLANNED', 'APPROVED', 'IN_PROGRESS', 'COMPLETED', 'SUSPENDED'].map((s) => (
-            <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
+            <option key={s} value={s}>{t('status.' + s)}</option>
           ))}
         </Select>
       </Card>
 
       {loading ? <Spinner /> : items.length === 0 ? (
-        <Card><EmptyState title="No projects" /></Card>
+        <Card><EmptyState title={t('projects.noProjects')} /></Card>
       ) : (
         <Card className="p-0">
-          <Table headers={['Project', 'Location', 'Status', 'Progress', 'Budget', 'Beneficiaries']}>
+          <Table headers={[t('projects.colProject'), t('projects.colLocation'), t('users.colStatus'), t('projects.colProgress'), t('projects.colBudget'), t('projects.colBeneficiaries')]}>
             {items.map((p) => (
               <tr key={p.id} className="hover:bg-slate-50 cursor-pointer" onClick={() => navigate(`/projects/${p.id}`)}>
                 <td className="py-3 pr-4 font-medium text-slate-800 max-w-[260px] truncate">{p.title}</td>
@@ -107,55 +109,55 @@ export function Projects() {
         </Card>
       )}
 
-      <Modal open={showNew} onClose={() => setShowNew(false)} title="Create a project" wide>
+      <Modal open={showNew} onClose={() => setShowNew(false)} title={t('projects.createTitle')} wide>
         <form onSubmit={create} className="space-y-4">
           {error && <div className="rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2">{error}</div>}
-          <Field label="Project name" required>
+          <Field label={t('projects.fieldName')} required>
             <Input value={form.title ?? ''} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
           </Field>
-          <Field label="Description" required>
+          <Field label={t('projects.fieldDescription')} required>
             <Textarea rows={3} value={form.description ?? ''} onChange={(e) => setForm({ ...form, description: e.target.value })} required />
           </Field>
-          <Field label="Location">
+          <Field label={t('projects.fieldLocation')}>
             <Input value={form.location ?? ''} onChange={(e) => setForm({ ...form, location: e.target.value })} />
           </Field>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Field label="Start date"><Input type="date" value={form.startDate ?? ''} onChange={(e) => setForm({ ...form, startDate: e.target.value })} /></Field>
-            <Field label="Expected completion"><Input type="date" value={form.expectedEndDate ?? ''} onChange={(e) => setForm({ ...form, expectedEndDate: e.target.value })} /></Field>
-            <Field label="Budget (RWF)"><Input type="number" value={form.budget ?? ''} onChange={(e) => setForm({ ...form, budget: e.target.value })} /></Field>
-            <Field label="Funding source"><Input value={form.fundingSource ?? ''} onChange={(e) => setForm({ ...form, fundingSource: e.target.value })} /></Field>
-            <Field label="Beneficiaries"><Input type="number" value={form.beneficiaries ?? ''} onChange={(e) => setForm({ ...form, beneficiaries: e.target.value })} /></Field>
-            <Field label="Budget spent to date (RWF)"><Input type="number" value={form.budgetSpent ?? ''} onChange={(e) => setForm({ ...form, budgetSpent: e.target.value })} /></Field>
+            <Field label={t('projects.fieldStartDate')}><Input type="date" value={form.startDate ?? ''} onChange={(e) => setForm({ ...form, startDate: e.target.value })} /></Field>
+            <Field label={t('projects.fieldExpectedCompletion')}><Input type="date" value={form.expectedEndDate ?? ''} onChange={(e) => setForm({ ...form, expectedEndDate: e.target.value })} /></Field>
+            <Field label={t('projects.fieldBudget')}><Input type="number" value={form.budget ?? ''} onChange={(e) => setForm({ ...form, budget: e.target.value })} /></Field>
+            <Field label={t('projects.fieldFundingSource')}><Input value={form.fundingSource ?? ''} onChange={(e) => setForm({ ...form, fundingSource: e.target.value })} /></Field>
+            <Field label={t('projects.fieldBeneficiaries')}><Input type="number" value={form.beneficiaries ?? ''} onChange={(e) => setForm({ ...form, beneficiaries: e.target.value })} /></Field>
+            <Field label={t('projects.fieldBudgetSpent')}><Input type="number" value={form.budgetSpent ?? ''} onChange={(e) => setForm({ ...form, budgetSpent: e.target.value })} /></Field>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-100">
-            <Field label="District" required>
+            <Field label={t('projects.fieldDistrict')} required>
               <Select value={form.districtId ?? ''} onChange={(e) => { loadSectors(Number(e.target.value)); setForm({ ...form, districtId: Number(e.target.value), sectorId: undefined, cellId: undefined, villageId: undefined }); setSectors([]); setCells([]); setVillages([]); }} required>
-                <option value="">Select</option>
+                <option value="">{t('users.select')}</option>
                 {districts.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
               </Select>
             </Field>
-            <Field label="Sector" required>
+            <Field label={t('projects.fieldSector')} required>
               <Select value={form.sectorId ?? ''} disabled={!sectors.length} onChange={(e) => { loadCells(Number(e.target.value)); setForm({ ...form, sectorId: Number(e.target.value), cellId: undefined, villageId: undefined }); setCells([]); setVillages([]); }}>
-                <option value="">Select</option>
+                <option value="">{t('users.select')}</option>
                 {sectors.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
               </Select>
             </Field>
-            <Field label="Cell" required>
+            <Field label={t('projects.fieldCell')} required>
               <Select value={form.cellId ?? ''} disabled={!cells.length} onChange={(e) => { loadVillages(Number(e.target.value)); setForm({ ...form, cellId: Number(e.target.value), villageId: undefined }); setVillages([]); }}>
-                <option value="">Select</option>
+                <option value="">{t('users.select')}</option>
                 {cells.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </Select>
             </Field>
-            <Field label="Village" required>
+            <Field label={t('projects.fieldVillage')} required>
               <Select value={form.villageId ?? ''} disabled={!villages.length} onChange={(e) => setForm({ ...form, villageId: Number(e.target.value) })}>
-                <option value="">Select</option>
+                <option value="">{t('users.select')}</option>
                 {villages.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
               </Select>
             </Field>
           </div>
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" onClick={() => setShowNew(false)}>Cancel</Button>
-            <Button type="submit" loading={saving}>Create project</Button>
+            <Button type="button" variant="secondary" onClick={() => setShowNew(false)}>{t('common.cancel')}</Button>
+            <Button type="submit" loading={saving}>{t('projects.create')}</Button>
           </div>
         </form>
       </Modal>

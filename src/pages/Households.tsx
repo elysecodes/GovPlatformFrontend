@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { Plus } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { api, apiError } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { Button, Card, EmptyState, Field, Input, Modal, PageHeader, Pagination, SearchInput, Select, Spinner, Table, formatDate } from '../components/ui';
@@ -12,6 +13,7 @@ interface Household { id: number; code: string; headName: string; members: numbe
 
 export function Households() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const level = user?.level ?? 6;
   const canCreate = level === 4 || level === 5;
   const [items, setItems] = useState<Household[]>([]);
@@ -79,13 +81,13 @@ export function Households() {
   return (
     <div>
       <PageHeader
-        title="Households"
-        subtitle="Registered households in your jurisdiction"
-        breadcrumb="Northern Province / Households"
+        title={t('nav.households')}
+        subtitle={t('households.subtitle')}
+        breadcrumb={t('households.breadcrumb', { app: t('common.appName'), page: t('nav.households') })}
         actions={canCreate && (
           <div className="flex flex-wrap gap-2">
             <ExportCsvButton path="/admin/households" filename="households" />
-            <Button onClick={() => setShowNew(true)}><Plus size={16} /> Register household</Button>
+            <Button onClick={() => setShowNew(true)}><Plus size={16} /> {t('households.registerHousehold')}</Button>
           </div>
         )}
       />
@@ -95,27 +97,27 @@ export function Households() {
           <SearchInput
             value={search}
             onChange={(v) => { setSearch(v); setPage(1); }}
-            placeholder="Search by household code or head of household..."
+            placeholder={t('households.searchPlaceholder')}
             className="w-full md:w-72"
           />
           <span className="ml-auto inline-flex items-center gap-2">
-            <span className="text-xs text-slate-400">Sort:</span>
+            <span className="text-xs text-slate-400">{t('households.sort')}</span>
             <Select className="!w-40 shrink-0" value={sort} onChange={(e) => { setPage(1); setSort(e.target.value); }}>
-              <option value="">Newest</option>
-              <option value="oldest">Oldest</option>
-              <option value="name">Head name A-Z</option>
-              <option value="members">Most members</option>
-              <option value="code">By code</option>
+              <option value="">{t('households.sortNewest')}</option>
+              <option value="oldest">{t('households.sortOldest')}</option>
+              <option value="name">{t('households.sortName')}</option>
+              <option value="members">{t('households.sortMembers')}</option>
+              <option value="code">{t('households.sortCode')}</option>
             </Select>
           </span>
         </div>
       </Card>
 
       {loading ? <Spinner /> : items.length === 0 ? (
-        <Card><EmptyState title="No households registered" /></Card>
+        <Card><EmptyState title={t('households.noHouseholds')} /></Card>
       ) : (
         <Card className="p-0">
-          <Table headers={['Code', 'Head of household', 'Members', 'Village', 'Registered']}>
+          <Table headers={[t('households.colCode'), t('households.colHead'), t('households.colMembers'), t('households.colVillage'), t('households.colRegistered')]}>
             {items.map((h) => (
               <tr key={h.id}>
                 <td className="py-3 pr-4 font-mono text-xs text-slate-500">{h.code}</td>
@@ -130,32 +132,32 @@ export function Households() {
         </Card>
       )}
 
-      <Modal open={showNew} onClose={() => setShowNew(false)} title="Register household">
+      <Modal open={showNew} onClose={() => setShowNew(false)} title={t('households.registerHousehold')}>
         <form onSubmit={create} className="space-y-4">
           {error && <div className="rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2">{error}</div>}
-          <Field label="Head of household" required>
+          <Field label={t('households.headOfHousehold')} required>
             <Input value={form.headName ?? ''} onChange={(e) => setForm({ ...form, headName: e.target.value })} required />
           </Field>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Field label="Members" required>
+            <Field label={t('households.members')} required>
               <Input type="number" min={1} value={form.members ?? ''} onChange={(e) => setForm({ ...form, members: Number(e.target.value) })} required />
             </Field>
-            <Field label="Household code" required>
-              <Input value={form.code ?? ''} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="e.g. VIL-001" required />
+            <Field label={t('households.householdCode')} required>
+              <Input value={form.code ?? ''} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder={t('households.codePlaceholder')} required />
             </Field>
           </div>
           {level === 4 && (
-            <Field label="Village" required>
+            <Field label={t('users.village')} required>
               <Select value={form.villageId ?? ''} onChange={(e) => setForm({ ...form, villageId: Number(e.target.value) })} required>
-                <option value="">Select village</option>
+                <option value="">{t('households.selectVillage')}</option>
                 {villages.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
               </Select>
             </Field>
           )}
-          {level === 5 && <p className="text-xs text-slate-400">Household will be registered in your village.</p>}
+          {level === 5 && <p className="text-xs text-slate-400">{t('households.villageNotice')}</p>}
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" onClick={() => setShowNew(false)}>Cancel</Button>
-            <Button type="submit" loading={saving}>Register</Button>
+            <Button type="button" variant="secondary" onClick={() => setShowNew(false)}>{t('common.cancel')}</Button>
+            <Button type="submit" loading={saving}>{t('households.register')}</Button>
           </div>
         </form>
       </Modal>

@@ -109,7 +109,7 @@ export function Users() {
       <PageHeader
         title={t('users.title')}
         subtitle={t('users.subtitle')}
-        breadcrumb="Northern Province / Accounts"
+        breadcrumb={`${t('common.appName')} / ${t('users.title')}`}
         actions={creatableRoles.length > 0 && (
           <div className="flex flex-wrap gap-2">
             <ExportCsvButton path="/admin/users" filename="users" />
@@ -123,16 +123,16 @@ export function Users() {
           <SearchInput
             value={search}
             onChange={(v) => { setSearch(v); setPage(1); }}
-            placeholder="Search by name, username or email..."
+            placeholder={t('users.searchPlaceholder')}
             className="w-full md:w-72"
           />
           <span className="ml-auto inline-flex items-center gap-2">
-            <span className="text-xs text-slate-400">Sort:</span>
+            <span className="text-xs text-slate-400">{t('users.sort')}:</span>
             <Select className="!w-40 shrink-0" value={sort} onChange={(e) => { setPage(1); setSort(e.target.value); }}>
-              <option value="">Newest</option>
-              <option value="oldest">Oldest</option>
-              <option value="name">Name A-Z</option>
-              <option value="role">By role</option>
+              <option value="">{t('users.sortNewest')}</option>
+              <option value="oldest">{t('users.sortOldest')}</option>
+              <option value="name">{t('users.sortName')}</option>
+              <option value="role">{t('users.sortRole')}</option>
             </Select>
           </span>
         </div>

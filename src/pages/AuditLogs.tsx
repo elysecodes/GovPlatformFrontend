@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { api } from '../lib/api';
 import { Card, EmptyState, PageHeader, Pagination, SearchInput, Spinner, Table, StatusBadge, formatDateTime } from '../components/ui';
 import { Paginated } from '../lib/types';
@@ -19,6 +20,7 @@ interface AuditEntry {
 }
 
 export function AuditLogs() {
+  const { t } = useTranslation();
   const [items, setItems] = useState<AuditEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -43,28 +45,28 @@ export function AuditLogs() {
   return (
     <div>
       <PageHeader
-        title="Audit Logs"
-        subtitle="Investigative trail of administrative activity"
-        breadcrumb="Northern Province / Audit Logs"
+        title={t('nav.auditLogs')}
+        subtitle={t('auditlogs.subtitle')}
+        breadcrumb={`${t('common.appName')} / ${t('nav.auditLogs')}`}
       />
       <Card className="mb-4">
         <SearchInput
           value={search}
           onChange={(v) => { setSearch(v); setPage(1); }}
-          placeholder="Search by user, action, page or endpoint..."
+          placeholder={t('auditlogs.searchPlaceholder')}
           className="w-full md:w-72"
         />
       </Card>
       {loading ? <Spinner /> : items.length === 0 ? (
-        <Card><EmptyState title="No audit records" /></Card>
+        <Card><EmptyState title={t('auditlogs.empty')} /></Card>
       ) : (
         <Card className="p-0">
-          <Table headers={['Time', 'User', 'Action', 'Entity', 'Endpoint']}>
+          <Table headers={[t('profile.colTime'), t('auditlogs.colUser'), t('auditlogs.colAction'), t('auditlogs.colEntity'), t('auditlogs.colEndpoint')]}>
             {items.map((a) => (
               <tr key={a.id}>
                 <td className="py-3 pr-4 text-slate-500 text-xs whitespace-nowrap">{formatDateTime(a.createdAt)}</td>
                 <td className="py-3 pr-4">
-                  <div className="font-medium text-slate-800 text-sm">{a.user?.fullName ?? 'System'}</div>
+                  <div className="font-medium text-slate-800 text-sm">{a.user?.fullName ?? t('auditlogs.system')}</div>
                   <div className="text-[10px] text-slate-400">{a.user?.role?.name}</div>
                 </td>
                 <td className="py-3 pr-4"><StatusBadge status={a.action} /></td>

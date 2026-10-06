@@ -1,7 +1,7 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
-  LayoutDashboard, MessageSquare, FileText, Megaphone, FolderKanban, CalendarDays,
+  LayoutDashboard, MessageSquare, FileText, Megaphone, FolderKanban, CalendarDays, CalendarRange,
   Users, Home, Bell, LogOut, ShieldCheck, Building2, ClipboardList, ScrollText, Menu,
   CheckSquare, Landmark, Handshake,
 } from 'lucide-react';
@@ -24,6 +24,7 @@ function navItems(role: string, t: (key: string) => string) {
     { to: '/announcements', label: t('nav.announcements'), icon: <Megaphone size={17} />, roles: ALL_ROLES },
     { to: '/projects', label: t('nav.projects'), icon: <FolderKanban size={17} />, roles: ALL_ROLES },
     { to: '/events', label: t('nav.events'), icon: <CalendarDays size={17} />, roles: ALL_ROLES },
+    { to: '/agenda', label: t('nav.agenda'), icon: <CalendarRange size={17} />, roles: ALL_ROLES },
     { to: '/households', label: t('nav.households'), icon: <Home size={17} />, roles: ['SUPER_ADMIN', 'PROVINCE_ADMIN', 'DISTRICT_ADMIN', 'SECTOR_ADMIN', 'CELL_ADMIN', 'VILLAGE_ADMIN'] },
     { to: '/citizens', label: t('nav.citizens'), icon: <Users size={17} />, roles: ADMIN_ROLES },
     { to: '/tasks', label: t('nav.tasks'), icon: <CheckSquare size={17} />, roles: ADMIN_ROLES },
@@ -124,7 +125,7 @@ export function Layout({ children }: { children: ReactNode }) {
             </div>
           </div>
         </div>
-        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+        <nav className="sidebar-scroll flex-1 overflow-y-auto px-3 py-4 space-y-1">
           {items.map((item) => (
             <NavLink
               key={item.to}
@@ -167,7 +168,7 @@ export function Layout({ children }: { children: ReactNode }) {
             <button
               onClick={() => setSidebarOpen(true)}
               className="md:hidden text-slate-500 hover:text-slate-700 p-1 -ml-1"
-              aria-label="Open menu"
+              aria-label={t('layout.openMenu')}
             >
               <Menu size={20} />
             </button>
@@ -197,7 +198,7 @@ export function Layout({ children }: { children: ReactNode }) {
               </div>
               <p className="text-xs text-slate-600 mt-0.5 line-clamp-2">{toast.content}</p>
               {toast.link && (
-                <Link to={toast.link} onClick={() => setToast(null)} className="text-xs text-brand-700 hover:underline mt-1 inline-block">Open →</Link>
+                <Link to={toast.link} onClick={() => setToast(null)} className="text-xs text-brand-700 hover:underline mt-1 inline-block">{t('layout.open')}</Link>
               )}
             </div>
           </div>
